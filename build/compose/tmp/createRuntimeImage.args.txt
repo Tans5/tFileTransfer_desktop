@@ -1,0 +1,10 @@
+--add-modules
+"java.desktop"
+--add-modules
+"java.logging"
+--strip-debug
+--no-header-files
+--no-man-pages
+--strip-native-commands
+--output
+"/Users/tanstan/AndroidStudioProjects/tFileTransfer_desktop/build/compose/tmp/main/runtime"
