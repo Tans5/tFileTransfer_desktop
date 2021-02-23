@@ -7,13 +7,13 @@ import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.tans.tfiletranserdesktop.ui.dialogBgColor
+import com.tans.tfiletranserdesktop.ui.colorDialogBg
 
 @Composable
 fun LoadingDialog() {
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = dialogBgColor
+        color = colorDialogBg
     ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
