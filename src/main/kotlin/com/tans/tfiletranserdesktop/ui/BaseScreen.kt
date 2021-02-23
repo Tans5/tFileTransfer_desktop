@@ -9,8 +9,14 @@ import kotlinx.coroutines.cancel
 abstract class BaseScreen<State>(defaultState: State) : Stateable<State> by Stateable(defaultState),
     CoroutineScope by CoroutineScope(Dispatchers.Default) {
 
-        @Composable
-        abstract fun start(screenRoute: ScreenRoute)
+    open fun initData() {
 
-        open fun stop(screenRoute: ScreenRoute) { cancel("Screen Cancel.") }
+    }
+
+    @Composable
+    abstract fun start(screenRoute: ScreenRoute)
+
+    open fun stop(screenRoute: ScreenRoute) {
+        cancel("Screen Cancel.")
+    }
 }

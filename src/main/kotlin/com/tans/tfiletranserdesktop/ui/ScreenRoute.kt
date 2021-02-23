@@ -39,6 +39,7 @@ class ScreenRoute : Stateable<List<BaseScreen<*>>> by Stateable(emptyList()), Co
     fun routeTo(screen: BaseScreen<*>) {
         launch {
             updateState {
+                screen.initData()
                 it + screen
             }.await()
         }
