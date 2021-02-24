@@ -1,3 +1,4 @@
+import com.tans.tfiletranserdesktop.net.launchBroadcastReceiver
 import com.tans.tfiletranserdesktop.net.launchBroadcastSender
 import com.tans.tfiletranserdesktop.utils.findLocalAddressV4
 import kotlinx.coroutines.Dispatchers
@@ -38,6 +39,34 @@ class SystemDirGetTest {
             }
 
         }
+        job.join()
+    }
+
+    @Test
+    fun broadcastReceiverTest() = runBlocking {
+        val job = launch(Dispatchers.IO) {
+            val address = findLocalAddressV4()[0]
+            val result = kotlin.runCatching {
+                launchBroadcastReceiver(
+                    localAddress = address,
+                    noneBroadcast = false,
+                    handle = {
+                        bindState()
+                            .doOnNext {
+                                it.map { it.first.second }
+                                    .forEach { string ->
+                                        println(string)
+                                    }
+                            }
+                            .subscribe()
+                    }
+                )
+            }
+            if (result.isFailure) {
+                result.exceptionOrNull()?.printStackTrace()
+            }
+        }
+
         job.join()
     }
 }
