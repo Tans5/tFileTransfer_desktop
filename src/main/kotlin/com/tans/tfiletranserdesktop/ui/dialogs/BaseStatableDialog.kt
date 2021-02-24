@@ -16,8 +16,6 @@ import com.tans.tfiletranserdesktop.ui.resources.colorDialogBg
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.rx2.await
 
 
 
@@ -59,9 +57,9 @@ abstract class BaseStatableDialog<State>(defaultState: State) :
     abstract fun DialogContent()
 
     protected fun cancel() {
-        launch {
-            updateState { it.copy(first = false) }.await()
-        }
+        updateState {
+            it.copy(first = false)
+        }.subscribe()
     }
 
     private fun stop() {
