@@ -9,7 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tans.tfiletranserdesktop.ui.dialogs.BaseStatableDialog
-import com.tans.tfiletranserdesktop.ui.dialogs.dialogTitleStyle
+import com.tans.tfiletranserdesktop.ui.resources.styleDialogTitle
 
 @Composable
 fun showBroadcastSenderDialog() {
@@ -25,7 +25,7 @@ class BroadcastSenderDialog : BaseStatableDialog<Unit>(Unit) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
                 text = "Waiting Connect...",
-                style = dialogTitleStyle
+                style = styleDialogTitle
             )
 
             Spacer(Modifier.height(6.dp))

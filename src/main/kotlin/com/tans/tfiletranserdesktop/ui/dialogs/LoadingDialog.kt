@@ -7,7 +7,7 @@ import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.tans.tfiletranserdesktop.ui.colorDialogBg
+import com.tans.tfiletranserdesktop.ui.resources.colorDialogBg
 
 @Composable
 fun LoadingDialog() {

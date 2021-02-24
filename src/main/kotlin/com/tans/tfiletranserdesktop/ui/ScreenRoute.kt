@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import com.tans.tfiletranserdesktop.core.Stateable
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.broadcast.Broadcast
+import com.tans.tfiletranserdesktop.ui.resources.defaultThemeColors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

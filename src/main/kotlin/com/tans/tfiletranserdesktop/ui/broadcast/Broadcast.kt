@@ -12,9 +12,9 @@ import androidx.compose.ui.Modifier
 import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
 import com.tans.tfiletranserdesktop.ui.filetransfer.FileTransfer
+import com.tans.tfiletranserdesktop.ui.resources.stringAppName
 
 class Broadcast : BaseScreen<Boolean>(true) {
-
 
 
     @Composable
@@ -24,7 +24,7 @@ class Broadcast : BaseScreen<Boolean>(true) {
             topBar = {
                 TopAppBar(
                     title = {
-                        Text("tFileTransfer")
+                        Text(stringAppName)
                     }
                 )
             }

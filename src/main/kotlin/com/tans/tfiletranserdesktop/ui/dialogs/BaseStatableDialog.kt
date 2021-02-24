@@ -7,32 +7,18 @@ import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.tans.tfiletranserdesktop.core.Stateable
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
-import com.tans.tfiletranserdesktop.ui.colorWhite
-import com.tans.tfiletranserdesktop.ui.colorDialogBg
-import com.tans.tfiletranserdesktop.ui.colorTextBlack
+import com.tans.tfiletranserdesktop.ui.resources.colorWhite
+import com.tans.tfiletranserdesktop.ui.resources.colorDialogBg
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx2.await
 
-val dialogTitleStyle = TextStyle(
-    fontSize = 20.sp,
-    color = colorTextBlack,
-    fontWeight = FontWeight.Bold
-)
 
-val dialogBodyStyle = TextStyle(
-    fontSize = 16.sp,
-    color = colorTextBlack,
-    fontWeight = FontWeight.Normal
-)
 
 abstract class BaseStatableDialog<State>(defaultState: State) :
     Stateable<Pair<Boolean, State>> by Stateable(true to defaultState),

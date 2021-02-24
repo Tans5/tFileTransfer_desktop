@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
+import com.tans.tfiletranserdesktop.ui.resources.stringAppName
 
 class FileTransfer : BaseScreen<Unit>(Unit) {
 

@@ -1,4 +1,4 @@
-package com.tans.tfiletranserdesktop.ui
+package com.tans.tfiletranserdesktop.ui.resources
 
 import androidx.compose.material.lightColors
 import androidx.compose.ui.graphics.Color
