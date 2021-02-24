@@ -38,7 +38,7 @@ typealias RemoteDevice = Pair<SocketAddress, String>
  */
 @Throws(IOException::class)
 suspend fun launchBroadcastSender(
-        // Unit: milli second
+    // Unit: milli second
     broadcastDelay: Long = 300,
     broadMessage: String,
     localAddress: InetAddress,
@@ -55,7 +55,7 @@ suspend fun launchBroadcastSender(
 }
 
 class BroadcastSender(
-        // Unit: milli second
+    // Unit: milli second
     val broadcastDelay: Long = 300,
     val broadMessage: String,
     val localAddress: InetAddress) {
@@ -69,6 +69,7 @@ class BroadcastSender(
         val result = kotlin.runCatching {
             dc.use {
                 dc.setOptionSuspend(StandardSocketOptions.SO_BROADCAST, true)
+                dc.setOptionSuspend(StandardSocketOptions.SO_REUSEADDR, true)
                 buffer.put(broadMessage.toByteArray(Charsets.UTF_8).let {
                     if (it.size > NET_BUFFER_SIZE) {
                         it.take(NET_BUFFER_SIZE).toByteArray()
@@ -97,6 +98,7 @@ class BroadcastSender(
         val buffer = commonNetBufferPool.requestBuffer()
         val result = kotlin.runCatching {
             dc.use {
+                dc.setOptionSuspend(StandardSocketOptions.SO_REUSEADDR, true)
                 buffer.put(broadMessage.toByteArray(Charsets.UTF_8).let {
                     if (it.size > NET_BUFFER_SIZE) {
                         it.take(NET_BUFFER_SIZE).toByteArray()
@@ -211,7 +213,10 @@ class BroadcastReceiver(
                 val dc = openDatagramChannel()
                 dc.socket().soTimeout = Int.MAX_VALUE
                 dc.setOptionSuspend(StandardSocketOptions.SO_BROADCAST, true)
-                dc.bindSuspend(InetSocketAddress(if (noneBroadcast) localAddress else broadcast, BROADCAST_RECEIVER_PORT))
+                dc.setOptionSuspend(StandardSocketOptions.SO_REUSEPORT, true)
+                dc.setOptionSuspend(StandardSocketOptions.SO_REUSEADDR, true)
+                val currentOs = getCurrentOs()
+                dc.bindSuspend(InetSocketAddress(if (noneBroadcast || currentOs == DesktopOs.Windows) localAddress else broadcast, BROADCAST_RECEIVER_PORT))
                 val byteBuffer = ByteBuffer.allocate(NET_BUFFER_SIZE)
                 while (true) {
                     byteBuffer.clear()
