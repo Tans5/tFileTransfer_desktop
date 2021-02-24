@@ -175,9 +175,17 @@ class Broadcast : BaseScreen<BroadcastState>(BroadcastState()) {
                     val noneBroadcast = !state.useSystemBroadcast
                     val time = state.dialogEvent.time
                     when (state.dialogEvent) {
-                        is BroadcastDialogEvent.ReceiverDialog -> showBroadcastReceiverDialog(localAddress = selectAddress, noneBroadcast = noneBroadcast, time = time)
+                        is BroadcastDialogEvent.ReceiverDialog -> showBroadcastReceiverDialog(
+                            localAddress = selectAddress,
+                            noneBroadcast = noneBroadcast,
+                            time = time,
+                            localDeviceInfo = state.localDeviceInfo)
 
-                        is BroadcastDialogEvent.SenderDialog -> showBroadcastSenderDialog(localAddress = selectAddress, noneBroadcast = noneBroadcast, time = time)
+                        is BroadcastDialogEvent.SenderDialog -> showBroadcastSenderDialog(
+                            localAddress = selectAddress,
+                            noneBroadcast = noneBroadcast,
+                            time = time,
+                            broadMessage = state.localDeviceInfo)
 
                         is BroadcastDialogEvent.None -> {  }
                     }
