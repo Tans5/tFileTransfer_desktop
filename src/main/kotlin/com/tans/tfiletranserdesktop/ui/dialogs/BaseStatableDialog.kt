@@ -1,5 +1,6 @@
 package com.tans.tfiletranserdesktop.ui.dialogs
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
@@ -22,7 +23,7 @@ import kotlinx.coroutines.rx2.await
 
 abstract class BaseStatableDialog<State>(defaultState: State) :
     Stateable<Pair<Boolean, State>> by Stateable(true to defaultState),
-    CoroutineScope by CoroutineScope(Dispatchers.Default) {
+    CoroutineScope by CoroutineScope(Dispatchers.IO) {
 
     open fun initData() {
 
@@ -36,7 +37,7 @@ abstract class BaseStatableDialog<State>(defaultState: State) :
                 modifier = Modifier.fillMaxSize(),
                 color = colorDialogBg
             ) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier.fillMaxSize().clickable {  }, contentAlignment = Alignment.Center) {
                     Card(
                         modifier = Modifier.width(350.dp),
                         backgroundColor = colorWhite,

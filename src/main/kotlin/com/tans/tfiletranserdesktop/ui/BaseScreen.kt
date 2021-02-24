@@ -7,7 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 
 abstract class BaseScreen<State>(defaultState: State) : Stateable<State> by Stateable(defaultState),
-    CoroutineScope by CoroutineScope(Dispatchers.Default) {
+    CoroutineScope by CoroutineScope(Dispatchers.IO) {
 
     open fun initData() {
 
