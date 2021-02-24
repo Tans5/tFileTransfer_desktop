@@ -2,6 +2,7 @@ package com.tans.tfiletranserdesktop.net.filetransporter
 
 import com.squareup.moshi.Types
 import com.tans.tfiletranserdesktop.core.Stateable
+import com.tans.tfiletranserdesktop.file.FileConstants
 import com.tans.tfiletranserdesktop.net.commonNetBufferPool
 import com.tans.tfiletranserdesktop.net.model.File
 import com.tans.tfiletranserdesktop.net.model.FileMd5
@@ -147,8 +148,7 @@ class FilesShareWriterHandle(
 
     override suspend fun handle(writerChannel: AsynchronousSocketChannel) {
         writerChannel.defaultActionCodeWrite()
-        // TODO: Fix Path.
-        val fileMd5s = files.filter { it.size > 0 }.map { FileMd5(md5 = Paths.get("", it.path).getFilePathMd5(), it) }
+        val fileMd5s = files.filter { it.size > 0 }.map { FileMd5(md5 = Paths.get(FileConstants.USER_HOME, it.path).getFilePathMd5(), it) }
         val jsonData = getJsonString(fileMd5s).toByteArray(Charsets.UTF_8)
         writerChannel.defaultIntSizeWrite(jsonData.size)
         val buffer = commonNetBufferPool.requestBuffer()

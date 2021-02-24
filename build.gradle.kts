@@ -29,6 +29,8 @@ dependencies {
     implementation("com.squareup.moshi:moshi:1.11.0")
     implementation("com.squareup.moshi:moshi-kotlin:1.11.0")
     implementation("com.squareup.moshi:moshi-adapters:1.11.0")
+
+    testImplementation("junit:junit:4.13.1")
 }
 
 tasks.withType<KotlinCompile>() {

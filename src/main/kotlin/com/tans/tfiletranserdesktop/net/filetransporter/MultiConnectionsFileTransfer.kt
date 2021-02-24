@@ -1,6 +1,7 @@
 package com.tans.tfiletranserdesktop.net.filetransporter
 
 import com.tans.tfiletranserdesktop.core.Stateable
+import com.tans.tfiletranserdesktop.file.FileConstants
 import com.tans.tfiletranserdesktop.net.NetBufferPool
 import com.tans.tfiletranserdesktop.net.model.File
 import com.tans.tfiletranserdesktop.net.model.FileMd5
@@ -51,8 +52,7 @@ suspend fun startMultiConnectionsFileServer(
 typealias PathConverter = (file: File) -> Path
 
 val defaultPathConverter: PathConverter = { file ->
-    // TODO: Fix home path
-    Paths.get("", file.path).let {
+    Paths.get(FileConstants.USER_HOME, file.path).let {
         if (file.size <= 0 || !Files.exists(it) || Files.isDirectory(it)) {
             error("Wrong File: $file")
         } else {
@@ -199,10 +199,9 @@ class MultiConnectionsFileTransferClient(
     private val md5 = fileMd5.md5
     private val fileSize = file.size
     private val downloadDir: Path by lazy {
-        // TODO: Fix Download folder.
-        val result = Paths.get("", "tFileTransfer")
+        val result = Paths.get("${FileConstants.USER_HOME}${FileConstants.FILE_SEPARATOR}Downloads", "tFileTransfer")
         if (!Files.exists(result)) {
-            Files.createDirectory(result)
+            Files.createDirectories(result)
         }
         result
     }
