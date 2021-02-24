@@ -17,13 +17,22 @@ import kotlinx.coroutines.launch
 import java.net.InetAddress
 
 @Composable
-fun showBroadcastSenderDialog(localAddress: InetAddress, noneBroadcast: Boolean, time: Long, broadMessage: String) {
-    val dialog = BroadcastSenderDialog(localAddress, noneBroadcast, broadMessage)
+fun showBroadcastSenderDialog(localAddress: InetAddress, noneBroadcast: Boolean, broadMessage: String, cancelRequest: () -> Unit) {
+    val dialog = BroadcastSenderDialog(
+        localAddress = localAddress,
+        noneBroadcast = noneBroadcast,
+        broadMessage = broadMessage,
+        cancelRequest = cancelRequest
+    )
     dialog.initData()
     dialog.start()
 }
 
-class BroadcastSenderDialog(private val localAddress: InetAddress, private val noneBroadcast: Boolean, private val broadMessage: String) : BaseStatableDialog<Unit>(Unit) {
+class BroadcastSenderDialog(
+    private val localAddress: InetAddress,
+    private val noneBroadcast: Boolean,
+    private val broadMessage: String,
+    cancelRequest: () -> Unit ) : BaseStatableDialog<Unit>(defaultState = Unit, cancelRequest = cancelRequest) {
 
     override fun initData() {
         launch {
@@ -32,6 +41,9 @@ class BroadcastSenderDialog(private val localAddress: InetAddress, private val n
 
                     false
                 }
+            }
+            if (result.isFailure) {
+                result.exceptionOrNull()?.printStackTrace()
             }
             cancel()
         }

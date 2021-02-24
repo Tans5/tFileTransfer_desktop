@@ -173,19 +173,24 @@ class Broadcast : BaseScreen<BroadcastState>(BroadcastState()) {
                     val state = dialogEvent.value.get()
                     val selectAddress = state.addresses[state.selectAddressIndex.get()]
                     val noneBroadcast = !state.useSystemBroadcast
-                    val time = state.dialogEvent.time
                     when (state.dialogEvent) {
                         is BroadcastDialogEvent.ReceiverDialog -> showBroadcastReceiverDialog(
                             localAddress = selectAddress,
                             noneBroadcast = noneBroadcast,
-                            time = time,
-                            localDeviceInfo = state.localDeviceInfo)
+                            localDeviceInfo = state.localDeviceInfo) {
+                            launch {
+                                updateState { oldState -> oldState.copy(dialogEvent = BroadcastDialogEvent.None(System.currentTimeMillis())) }.await()
+                            }
+                        }
 
                         is BroadcastDialogEvent.SenderDialog -> showBroadcastSenderDialog(
                             localAddress = selectAddress,
                             noneBroadcast = noneBroadcast,
-                            time = time,
-                            broadMessage = state.localDeviceInfo)
+                            broadMessage = state.localDeviceInfo) {
+                            launch {
+                                updateState { oldState -> oldState.copy(dialogEvent = BroadcastDialogEvent.None(System.currentTimeMillis())) }.await()
+                            }
+                        }
 
                         is BroadcastDialogEvent.None -> {  }
                     }

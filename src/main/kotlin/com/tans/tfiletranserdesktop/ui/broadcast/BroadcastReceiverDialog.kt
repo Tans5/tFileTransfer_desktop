@@ -15,13 +15,31 @@ import kotlinx.coroutines.launch
 import java.net.InetAddress
 
 @Composable
-fun showBroadcastReceiverDialog(localAddress: InetAddress, noneBroadcast: Boolean, localDeviceInfo: String, time: Long) {
-    val dialog = BroadcastReceiverDialog(localAddress = localAddress, noneBroadcast = noneBroadcast, localDeviceInfo = localDeviceInfo)
+fun showBroadcastReceiverDialog(
+    localAddress: InetAddress,
+    noneBroadcast: Boolean,
+    localDeviceInfo: String,
+    cancelRequest: () -> Unit
+) {
+    val dialog = BroadcastReceiverDialog(
+        localAddress = localAddress,
+        noneBroadcast = noneBroadcast,
+        localDeviceInfo = localDeviceInfo,
+        cancelRequest = cancelRequest
+    )
     dialog.initData()
     dialog.start()
 }
 
-class BroadcastReceiverDialog(val localAddress: InetAddress, val noneBroadcast: Boolean, val localDeviceInfo: String) : BaseStatableDialog<Unit>(Unit) {
+class BroadcastReceiverDialog(
+    val localAddress: InetAddress,
+    val noneBroadcast: Boolean,
+    val localDeviceInfo: String,
+    cancelRequest: () -> Unit
+) : BaseStatableDialog<Unit>(
+    defaultState = Unit,
+    cancelRequest = cancelRequest
+) {
 
     override fun initData() {
 
@@ -36,7 +54,10 @@ class BroadcastReceiverDialog(val localAddress: InetAddress, val noneBroadcast: 
             )
 
             Spacer(Modifier.height(6.dp))
-            Box(modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 10.dp), contentAlignment = Alignment.Center) {
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(top = 10.dp, bottom = 10.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 CircularProgressIndicator()
             }
             Spacer(Modifier.height(2.dp))

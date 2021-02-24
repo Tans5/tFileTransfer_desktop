@@ -19,8 +19,8 @@ import kotlinx.coroutines.cancel
 
 
 
-abstract class BaseStatableDialog<State>(defaultState: State) :
-    Stateable<Pair<Boolean, State>> by Stateable(true to defaultState),
+abstract class BaseStatableDialog<State>(defaultState: State, val cancelRequest: () -> Unit = {  }) :
+    Stateable<State> by Stateable(defaultState),
     CoroutineScope by CoroutineScope(Dispatchers.IO) {
 
     open fun initData() {
@@ -29,40 +29,37 @@ abstract class BaseStatableDialog<State>(defaultState: State) :
 
     @Composable
     fun start() {
-        val isShow = bindState().map { it.first }.distinctUntilChanged().subscribeAsState(true)
-        if (isShow.value) {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = colorDialogBg
-            ) {
-                Box(modifier = Modifier.fillMaxSize().clickable {  }, contentAlignment = Alignment.Center) {
-                    Card(
-                        modifier = Modifier.width(350.dp),
-                        backgroundColor = colorWhite,
-                        shape = RoundedCornerShape(4.dp),
-                        elevation = 8.dp
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = colorDialogBg
+        ) {
+            Box(modifier = Modifier.fillMaxSize().clickable { }, contentAlignment = Alignment.Center) {
+                Card(
+                    modifier = Modifier.width(350.dp),
+                    backgroundColor = colorWhite,
+                    shape = RoundedCornerShape(4.dp),
+                    elevation = 8.dp
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(start = 15.dp, top = 17.dp, end = 15.dp, bottom = 5.dp)
                     ) {
-                        Box(modifier = Modifier.fillMaxWidth().padding(start = 15.dp, top = 17.dp, end = 15.dp, bottom = 5.dp)) {
-                            DialogContent()
-                        }
+                        DialogContent()
                     }
                 }
             }
-        } else {
-            stop()
         }
+    }
+
+    fun cancel() {
+        stop()
+        cancelRequest()
     }
 
     @Composable
     abstract fun DialogContent()
 
-    protected fun cancel() {
-        updateState {
-            it.copy(first = false)
-        }.subscribe()
-    }
-
-    private fun stop() {
+    fun stop() {
         cancel("Dialog Cancel.")
     }
 
