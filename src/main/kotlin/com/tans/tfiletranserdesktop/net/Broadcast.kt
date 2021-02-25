@@ -109,7 +109,7 @@ class BroadcastSender(
                 while (true) {
                     for (subNet in subNets) {
                         buffer.flip()
-                        dc.sendSuspend(buffer, InetSocketAddress(subNet, BROADCAST_RECEIVER_PORT))
+                        kotlin.runCatching { dc.sendSuspend(buffer, InetSocketAddress(subNet, BROADCAST_RECEIVER_PORT)) }
                     }
                     delay(broadcastDelay)
                 }
