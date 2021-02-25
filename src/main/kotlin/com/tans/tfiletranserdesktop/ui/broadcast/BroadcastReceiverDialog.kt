@@ -1,13 +1,19 @@
 package com.tans.tfiletranserdesktop.ui.broadcast
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.tans.tfiletranserdesktop.net.RemoteDevice
 import com.tans.tfiletranserdesktop.net.launchBroadcastReceiver
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
@@ -158,6 +164,36 @@ class BroadcastReceiverDialog(
 
     @Composable
     fun DevicesContent(devices: List<RemoteDevice>) {
-        Text(text = devices.joinToString { it.second })
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 60.dp)
+        ) {
+            items(
+                count = devices.size,
+                key = { i -> devices[i].first }
+            ) { i ->
+                Column(
+                    modifier = Modifier.fillMaxWidth().height(55.dp).padding(start = 5.dp)
+                        .clickable {
+
+                        },
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    val device = devices[i]
+                    Text(
+                        text = device.second,
+                        style = TextStyle(color = colorTextBlack, fontSize = 14.sp, fontWeight = FontWeight.W500),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(5.dp))
+
+                    Text(
+                        text = (device.first as InetSocketAddress).hostString,
+                        style = TextStyle(color = colorTextGray, fontSize = 12.sp, fontWeight = FontWeight.W500),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        }
     }
 }
