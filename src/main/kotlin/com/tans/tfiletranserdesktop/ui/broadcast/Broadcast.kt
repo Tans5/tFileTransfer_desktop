@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.sp
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
+import com.tans.tfiletranserdesktop.ui.filetransfer.FileTransfer
 import com.tans.tfiletranserdesktop.ui.resources.*
 import com.tans.tfiletranserdesktop.utils.findLocalAddressV4
 import com.tans.tfiletranserdesktop.utils.getCurrentOs
@@ -143,11 +144,12 @@ class Broadcast : BaseScreen<BroadcastState>(BroadcastState()) {
 
                         OutlinedButton(
                             onClick = {
-                                launch {
-                                    updateState { oldState ->
-                                        oldState.copy(dialogEvent = BroadcastDialogEvent.SenderDialog(time = System.currentTimeMillis()))
-                                    }.await()
-                                }
+//                                launch {
+//                                    updateState { oldState ->
+//                                        oldState.copy(dialogEvent = BroadcastDialogEvent.SenderDialog(time = System.currentTimeMillis()))
+//                                    }.await()
+//                                }
+                                      screenRoute.routeTo(FileTransfer())
                             },
                             modifier = Modifier.align(alignment = Alignment.CenterHorizontally).width(450.dp).height(55.dp),
                             border = BorderStroke(ButtonDefaults.OutlinedBorderSize, colorTeal200)
