@@ -7,7 +7,6 @@ import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
@@ -86,10 +85,12 @@ class BroadcastReceiverDialog(
                             this@BroadcastReceiverDialog.bindState()
                                 .map { it.requestConnectTo }
                                 .filter { it.isPresent }
+                                .distinctUntilChanged { t1, t2 -> t1 === t2}
                                 .flatMapSingle {
                                     rxSingle(Dispatchers.IO) {
                                         this@BroadcastReceiverDialog.updateState { it.copy(showLoading = true) }.await()
                                         val address = (it.get().first as InetSocketAddress).address
+                                        println("Address: ${address.hostAddress}")
                                         if (connectTo(
                                             address = address,
                                             yourDeviceInfo = localDeviceInfo
@@ -171,14 +172,18 @@ class BroadcastReceiverDialog(
                 count = devices.size,
                 key = { i -> devices[i].first }
             ) { i ->
+                val device = devices[i]
                 Column(
                     modifier = Modifier.fillMaxWidth().height(55.dp).padding(start = 5.dp)
                         .clickable {
-
+                            launch {
+                                updateState { oldState ->
+                                    oldState.copy(requestConnectTo = Optional.of(device))
+                                }.await()
+                            }
                         },
                     verticalArrangement = Arrangement.Center
                 ) {
-                    val device = devices[i]
                     Text(
                         text = device.second,
                         style = TextStyle(color = colorTextBlack, fontSize = 14.sp, fontWeight = FontWeight.W500),

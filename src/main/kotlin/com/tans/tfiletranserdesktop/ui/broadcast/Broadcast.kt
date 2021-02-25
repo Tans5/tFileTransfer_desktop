@@ -17,6 +17,7 @@ import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
 import com.tans.tfiletranserdesktop.ui.resources.*
 import com.tans.tfiletranserdesktop.utils.findLocalAddressV4
+import com.tans.tfiletranserdesktop.utils.getCurrentOs
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx2.await
 import java.net.InetAddress
@@ -43,7 +44,7 @@ class Broadcast : BaseScreen<BroadcastState>(BroadcastState()) {
             updateState { oldState ->
                 val localAddresses = findLocalAddressV4()
                 val username = System.getProperty("user.name")
-                val deviceName = System.getProperty("os.name")
+                val deviceName = getCurrentOs().name
                 oldState.copy(
                     addresses = localAddresses,
                     selectAddressIndex = if (localAddresses.isEmpty()) Optional.empty<Int>() else Optional.of(0),
