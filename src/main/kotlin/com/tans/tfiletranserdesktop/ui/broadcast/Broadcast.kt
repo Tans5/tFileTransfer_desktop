@@ -32,7 +32,7 @@ data class BroadcastState(
     val addresses: List<InetAddress> = emptyList(),
     val selectAddressIndex: Optional<Int> = Optional.empty<Int>(),
     val localDeviceInfo: String = "",
-    val useSystemBroadcast: Boolean = false,
+    val useSystemBroadcast: Boolean = true,
     val dialogEvent: BroadcastDialogEvent = BroadcastDialogEvent.None(System.currentTimeMillis())
 )
 
@@ -177,7 +177,10 @@ class Broadcast : BaseScreen<BroadcastState>(BroadcastState()) {
                         is BroadcastDialogEvent.ReceiverDialog -> showBroadcastReceiverDialog(
                             localAddress = selectAddress,
                             noneBroadcast = noneBroadcast,
-                            localDeviceInfo = state.localDeviceInfo) {
+                            localDeviceInfo = state.localDeviceInfo,
+                            connectTo = {
+                                // TODO: connect to server.
+                            }) {
                             launch {
                                 updateState { oldState -> oldState.copy(dialogEvent = BroadcastDialogEvent.None(System.currentTimeMillis())) }.await()
                             }
@@ -186,7 +189,11 @@ class Broadcast : BaseScreen<BroadcastState>(BroadcastState()) {
                         is BroadcastDialogEvent.SenderDialog -> showBroadcastSenderDialog(
                             localAddress = selectAddress,
                             noneBroadcast = noneBroadcast,
-                            broadMessage = state.localDeviceInfo) {
+                            broadMessage = state.localDeviceInfo,
+                            receiveConnect = {
+                                // TODO: connect to client.
+                            }
+                            ) {
                             launch {
                                 updateState { oldState -> oldState.copy(dialogEvent = BroadcastDialogEvent.None(System.currentTimeMillis())) }.await()
                             }
