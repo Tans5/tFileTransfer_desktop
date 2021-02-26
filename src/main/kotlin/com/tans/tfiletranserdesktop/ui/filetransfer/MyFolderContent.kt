@@ -68,7 +68,7 @@ data class MyFolderContentState(
 val fileDateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
 
 @Composable
-fun FileList(fileTree: FileTree, selectedFiles: Set<CommonFileLeaf>, sortType: FileSortType) {
+fun FileList(fileTree: FileTree, selectedFiles: Set<CommonFileLeaf>, sortType: FileSortType, onClick: (fileOrDir: FileLeaf) -> Unit) {
     Column(modifier = Modifier.fillMaxSize()) {
         Box(Modifier.padding(10.dp)) {
             Text(text = fileTree.path, style = TextStyle(color = colorTextGray, fontSize = 15.sp), maxLines = 1)
@@ -87,9 +87,7 @@ fun FileList(fileTree: FileTree, selectedFiles: Set<CommonFileLeaf>, sortType: F
                                     .clickable(
                                             interactionSource = MutableInteractionSource(),
                                             indication = rememberRipple(bounded = true),
-                                            onClick = {
-
-                                            }
+                                            onClick = { onClick(fileOrDir) }
                                     ),
                             verticalAlignment = Alignment.CenterVertically) {
 
@@ -206,7 +204,9 @@ class MyFolderContent(val fileTransferScreen: FileTransferScreen) : BaseScreen<M
                     fileTree = fileTree,
                     selectedFiles = selectedFiles,
                     sortType = sortType
-                )
+                ) { fileOrDir: FileLeaf ->  
+                    
+                }
             }
 
             Box(modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp)) {
