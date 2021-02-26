@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.sp
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
-import com.tans.tfiletranserdesktop.ui.filetransfer.FileTransfer
+import com.tans.tfiletranserdesktop.ui.filetransfer.FileTransferScreen
 import com.tans.tfiletranserdesktop.ui.resources.*
 import com.tans.tfiletranserdesktop.utils.findLocalAddressV4
 import com.tans.tfiletranserdesktop.utils.getCurrentOs
@@ -38,7 +38,7 @@ data class BroadcastState(
     val dialogEvent: BroadcastDialogEvent = BroadcastDialogEvent.None(System.currentTimeMillis())
 )
 
-class Broadcast : BaseScreen<BroadcastState>(BroadcastState()) {
+class BroadcastScreen : BaseScreen<BroadcastState>(BroadcastState()) {
 
     override fun initData() {
         launch {
@@ -144,12 +144,11 @@ class Broadcast : BaseScreen<BroadcastState>(BroadcastState()) {
 
                         OutlinedButton(
                             onClick = {
-//                                launch {
-//                                    updateState { oldState ->
-//                                        oldState.copy(dialogEvent = BroadcastDialogEvent.SenderDialog(time = System.currentTimeMillis()))
-//                                    }.await()
-//                                }
-                                      screenRoute.routeTo(FileTransfer())
+                                launch {
+                                    updateState { oldState ->
+                                        oldState.copy(dialogEvent = BroadcastDialogEvent.SenderDialog(time = System.currentTimeMillis()))
+                                    }.await()
+                                }
                             },
                             modifier = Modifier.align(alignment = Alignment.CenterHorizontally).width(450.dp).height(55.dp),
                             border = BorderStroke(ButtonDefaults.OutlinedBorderSize, colorTeal200)
@@ -181,8 +180,14 @@ class Broadcast : BaseScreen<BroadcastState>(BroadcastState()) {
                             localAddress = selectAddress,
                             noneBroadcast = noneBroadcast,
                             localDeviceInfo = state.localDeviceInfo,
-                            connectTo = {
-                                // TODO: connect to server.
+                            connectTo = { remoteDevice ->
+                                screenRoute.routeTo(
+                                    FileTransferScreen(
+                                        localAddress = selectAddress,
+                                        remoteDevice = remoteDevice,
+                                        asServer = false
+                                    )
+                                )
                             }) {
                             launch {
                                 updateState { oldState -> oldState.copy(dialogEvent = BroadcastDialogEvent.None(System.currentTimeMillis())) }.await()
@@ -193,10 +198,15 @@ class Broadcast : BaseScreen<BroadcastState>(BroadcastState()) {
                             localAddress = selectAddress,
                             noneBroadcast = noneBroadcast,
                             broadMessage = state.localDeviceInfo,
-                            receiveConnect = {
-                                // TODO: connect to client.
-                            }
-                            ) {
+                            receiveConnect = { remoteDevice ->
+                                screenRoute.routeTo(
+                                    FileTransferScreen(
+                                        localAddress = selectAddress,
+                                        remoteDevice = remoteDevice,
+                                        asServer = true
+                                    )
+                                )
+                            }) {
                             launch {
                                 updateState { oldState -> oldState.copy(dialogEvent = BroadcastDialogEvent.None(System.currentTimeMillis())) }.await()
                             }
