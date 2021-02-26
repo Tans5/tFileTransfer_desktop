@@ -12,18 +12,29 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.vectorXmlResource
 import androidx.compose.ui.unit.dp
+import com.tans.tfiletranserdesktop.ui.BaseScreen
+import com.tans.tfiletranserdesktop.ui.ScreenRoute
 
-@Composable
-fun FileTransferScreen.MyFolderContent() {
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Text("My Folder")
-        }
+data class MyFolderContentState(
+    val unit: Unit = Unit
+)
 
-        Box(modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp)) {
-            FloatingActionButton(onClick = {}) {
-                Image(imageVector = vectorXmlResource("images/share_variant_outline.xml"), contentDescription = null)
+class MyFolderContent(val fileTransferScreen: FileTransferScreen) : BaseScreen<MyFolderContentState>(defaultState = MyFolderContentState()) {
+
+    @Composable
+    override fun start(screenRoute: ScreenRoute) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Text("My Folder")
+            }
+
+            Box(modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp)) {
+                FloatingActionButton(onClick = {}) {
+                    Image(imageVector = vectorXmlResource("images/share_variant_outline.xml"), contentDescription = null)
+                }
             }
         }
     }
+
+
 }

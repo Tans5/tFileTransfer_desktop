@@ -57,6 +57,10 @@ class FileTransferScreen(
     )
     lateinit var remoteFileSeparator: String
 
+    val myFolderContent = MyFolderContent(fileTransferScreen = this)
+    val remoteFolderContent = RemoteFolderContent(fileTransferScreen = this)
+    val messageContent = MessageContent(fileTransferScreen = this)
+
     override fun initData() {
         launch(Dispatchers.IO) {
             val result = runCatching {
@@ -80,6 +84,9 @@ class FileTransferScreen(
             updateState { oldState ->
                 oldState.copy(connectStatus = ConnectStatus.Connected)
             }.await()
+            myFolderContent.initData()
+            remoteFolderContent.initData()
+            messageContent.initData()
         }
     }
 
@@ -168,9 +175,9 @@ class FileTransferScreen(
                 ConnectStatus.Connected -> {
                     Box(modifier = Modifier.fillMaxSize().padding(bottom = 56.dp), contentAlignment = Alignment.Center) {
                         when (selectedTab.value) {
-                            FileTransferTab.MyFolder -> MyFolderContent()
-                            FileTransferTab.RemoteFolder -> RemoteFolderContent()
-                            FileTransferTab.Message -> MessageContent()
+                            FileTransferTab.MyFolder -> myFolderContent.start(screenRoute)
+                            FileTransferTab.RemoteFolder -> remoteFolderContent.start(screenRoute)
+                            FileTransferTab.Message -> messageContent.start(screenRoute)
                             else -> {}
                         }
                     }
@@ -189,6 +196,13 @@ class FileTransferScreen(
         ) {
             CircularProgressIndicator()
         }
+    }
+
+    override fun stop(screenRoute: ScreenRoute) {
+        super.stop(screenRoute)
+        myFolderContent.stop(screenRoute)
+        remoteFolderContent.stop(screenRoute)
+        messageContent.stop(screenRoute)
     }
 
 }
