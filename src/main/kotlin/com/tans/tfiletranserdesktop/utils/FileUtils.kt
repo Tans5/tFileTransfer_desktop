@@ -10,6 +10,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import java.security.MessageDigest
+import java.text.DecimalFormat
 
 fun Path.newChildFile(name: String): Path {
     val childPath = Paths.get(toAbsolutePath().toString(), name)
@@ -38,11 +39,12 @@ fun Path.newChildFile(name: String): Path {
     }
 }
 
+val fileSizeFormatter = DecimalFormat("0.##")
 fun getSizeString(size: Long): String = when (size) {
-    in 0 until KB -> "${size}B"
-    in KB until MB -> "${size.toDouble() / KB}KB"
-    in MB until GB -> "${size.toDouble() / MB}MB"
-    in GB until Long.MAX_VALUE -> "${size.toDouble() / GB}GB"
+    in 0 until KB -> "$size B"
+    in KB until MB -> "${fileSizeFormatter.format(size.toDouble() / KB)} KB"
+    in MB until GB -> "${fileSizeFormatter.format(size.toDouble() / MB)} MB"
+    in GB until Long.MAX_VALUE -> "${fileSizeFormatter.format(size.toDouble() / GB)} GB"
     else -> ""
 }
 

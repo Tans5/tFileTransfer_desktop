@@ -1,12 +1,17 @@
 package com.tans.tfiletranserdesktop.ui.filetransfer
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.Checkbox
 import androidx.compose.material.Divider
 import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Text
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.vectorXmlResource
@@ -17,12 +22,18 @@ import com.tans.tfiletranserdesktop.file.*
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
+import com.tans.tfiletranserdesktop.ui.resources.colorTextBlack
 import com.tans.tfiletranserdesktop.ui.resources.colorTextGray
+import com.tans.tfiletranserdesktop.utils.getSizeString
 import io.reactivex.Single
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx2.await
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.time.Instant
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import kotlin.streams.toList
 
 enum class FileSortType {
@@ -54,19 +65,82 @@ data class MyFolderContentState(
     val sortType: FileSortType = FileSortType.SortByName
 )
 
+val fileDateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
+
 @Composable
 fun FileList(fileTree: FileTree, selectedFiles: Set<CommonFileLeaf>, sortType: FileSortType) {
     Column(modifier = Modifier.fillMaxSize()) {
         Box(Modifier.padding(10.dp)) {
-            Text(text = fileTree.path, style = TextStyle(color = colorTextGray, fontSize = 15.sp))
+            Text(text = fileTree.path, style = TextStyle(color = colorTextGray, fontSize = 15.sp), maxLines = 1)
         }
         Divider(modifier = Modifier.height(1.dp).fillMaxWidth())
         val fileAndDirs: List<FileLeaf> = fileTree.dirLeafs.sortDir(sortType) + fileTree.fileLeafs.sortFile(sortType)
         LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
             items(count = fileAndDirs.size, key = { i -> fileAndDirs[i].path }) { i ->
                 val fileOrDir = fileAndDirs[i]
-                Row(modifier = Modifier.fillMaxWidth().height(75.dp).padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("${if (fileOrDir is CommonFileLeaf) "File: " else "Dir: "} ${fileOrDir.name}")
+                val isDir = fileOrDir is DirectoryFileLeaf
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                            modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(65.dp)
+                                    .clickable(
+                                            interactionSource = MutableInteractionSource(),
+                                            indication = rememberRipple(bounded = true),
+                                            onClick = {
+
+                                            }
+                                    ),
+                            verticalAlignment = Alignment.CenterVertically) {
+
+                        Spacer(Modifier.width(20.dp))
+                        Image(
+                                imageVector = vectorXmlResource(if (isDir) "images/folder_outline.xml" else "images/file_outline.xml"),
+                                contentDescription = null,
+                                modifier = Modifier.width(25.dp).height(25.dp))
+                        Spacer(Modifier.width(20.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                    text = fileOrDir.name,
+                                    style = TextStyle(color = colorTextBlack, fontSize = 17.sp),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    maxLines = 1
+                            )
+                            Spacer(modifier = Modifier.height(5.dp))
+                            Row(modifier = Modifier.fillMaxWidth()) {
+                                val dateString = remember(fileOrDir.lastModified) {
+                                    val dateTime = OffsetDateTime.ofInstant(Instant.ofEpochMilli(fileOrDir.lastModified), ZoneId.systemDefault())
+                                    fileDateTimeFormatter.format(dateTime)
+                                }
+                                Text(text = dateString,
+                                        style = TextStyle(color = colorTextGray, fontSize = 14.sp),
+                                        modifier = Modifier.weight(1f),
+                                        maxLines = 1
+                                )
+                                Spacer(Modifier.width(2.dp))
+                                Text(text = if (isDir)
+                                    "${(fileOrDir as DirectoryFileLeaf).childrenCount} files"
+                                else getSizeString((fileOrDir as CommonFileLeaf).size),
+                                        style = TextStyle(color = colorTextGray, fontSize = 14.sp),
+                                        maxLines = 1
+                                )
+                            }
+                        }
+                        Spacer(Modifier.width(15.dp))
+                        if (isDir) {
+                            Image(
+                                    imageVector = vectorXmlResource("images/chevron_right.xml"),
+                                    contentDescription = null
+                            )
+                        } else {
+                            Checkbox(checked = selectedFiles.contains(fileOrDir),
+                                    onCheckedChange = null)
+                        }
+                        Spacer(Modifier.width(15.dp))
+                    }
+                    Box(Modifier.fillMaxWidth().padding(start = 65.dp)) {
+                        Divider(modifier = Modifier.fillMaxWidth().height(1.dp))
+                    }
                 }
             }
         }
