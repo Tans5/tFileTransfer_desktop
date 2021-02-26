@@ -18,4 +18,12 @@ class MessageContent(
         Text("Message")
     }
 
+    fun back(): Boolean {
+        return false
+    }
+
+    fun refresh() {
+
+    }
+
 }

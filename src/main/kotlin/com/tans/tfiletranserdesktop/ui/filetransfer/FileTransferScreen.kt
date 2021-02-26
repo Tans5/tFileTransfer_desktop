@@ -106,7 +106,28 @@ class FileTransferScreen(
                         }
                     },
                     navigationIcon = {
-                        IconButton(onClick = { screenRoute.back() }) {
+                        IconButton(onClick = {
+                            launch {
+                                when (bindState().firstOrError().map { it.selectedTab }.await()) {
+                                    FileTransferTab.MyFolder -> {
+                                        if (!myFolderContent.back()) {
+                                            screenRoute.back()
+                                        }
+                                    }
+                                    FileTransferTab.Message -> {
+                                        if (!messageContent.back()) {
+                                            screenRoute.back()
+                                        }
+                                    }
+                                    FileTransferTab.RemoteFolder -> {
+                                        if (!remoteFolderContent.back()) {
+                                            screenRoute.back()
+                                        }
+                                    }
+                                    else -> {}
+                                }
+                            }
+                        }) {
                             Icon(Icons.Default.ArrowBack, contentDescription = "ArrowBack")
                         }
                     }
@@ -129,6 +150,9 @@ class FileTransferScreen(
                                 onClick = {
                                     launch {
                                         updateState { oldState ->
+                                            if (oldState.selectedTab == FileTransferTab.MyFolder) {
+                                                myFolderContent.refresh()
+                                            }
                                             oldState.copy(selectedTab = FileTransferTab.MyFolder)
                                         }.await()
                                     }
@@ -144,6 +168,9 @@ class FileTransferScreen(
                                 onClick = {
                                     launch {
                                         updateState { oldState ->
+                                            if (oldState.selectedTab == FileTransferTab.RemoteFolder) {
+                                                remoteFolderContent.refresh()
+                                            }
                                             oldState.copy(selectedTab = FileTransferTab.RemoteFolder)
                                         }.await()
                                     }
@@ -159,6 +186,9 @@ class FileTransferScreen(
                                 onClick = {
                                     launch {
                                         updateState { oldState ->
+                                            if (oldState.selectedTab == FileTransferTab.Message) {
+                                                messageContent.refresh()
+                                            }
                                             oldState.copy(selectedTab = FileTransferTab.Message)
                                         }.await()
                                     }

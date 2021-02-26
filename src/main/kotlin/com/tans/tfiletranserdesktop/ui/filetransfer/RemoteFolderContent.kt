@@ -37,4 +37,12 @@ class RemoteFolderContent(val fileTransferScreen: FileTransferScreen)
         }
     }
 
+    fun back(): Boolean {
+        return false
+    }
+
+    fun refresh() {
+
+    }
+
 }

@@ -143,4 +143,25 @@ class MyFolderContent(val fileTransferScreen: FileTransferScreen) : BaseScreen<M
         }
     }
 
+    fun back(): Boolean {
+        return if (bindState().firstOrError().blockingGet().fileTree.isRootFileTree()) {
+            false
+        } else {
+            updateState { state ->
+                if (state.fileTree.parentTree == null) state else MyFolderContentState(
+                    fileTree = state.fileTree.parentTree, selectedFiles = emptySet())
+            }.subscribe()
+            true
+        }
+    }
+
+    fun refresh() {
+        launch {
+            updateState { oldState ->
+                val newTree = oldState.fileTree.copy(notNeedRefresh = false)
+                oldState.copy(fileTree = newTree, selectedFiles = emptySet())
+            }.await()
+        }
+    }
+
 }
