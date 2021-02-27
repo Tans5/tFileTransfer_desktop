@@ -225,7 +225,7 @@ class MyFolderContent(val fileTransferScreen: FileTransferScreen) : BaseScreen<M
                                 }
 
                                 is DirectoryFileLeaf -> {
-                                    oldState.copy(fileTree = fileOrDir.newSubTree(oldState.fileTree))
+                                    oldState.copy(fileTree = fileOrDir.newSubTree(oldState.fileTree), selectedFiles = emptySet())
                                 }
                             }
                         }.await()

@@ -11,9 +11,14 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.squareup.moshi.Types
 import com.tans.tfiletranserdesktop.net.RemoteDevice
 import com.tans.tfiletranserdesktop.net.filetransporter.FileTransporter
+import com.tans.tfiletranserdesktop.net.filetransporter.FilesShareWriterHandle
 import com.tans.tfiletranserdesktop.net.filetransporter.launchFileTransport
+import com.tans.tfiletranserdesktop.net.model.File
+import com.tans.tfiletranserdesktop.net.model.ResponseFolderModel
+import com.tans.tfiletranserdesktop.net.model.moshi
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
@@ -21,6 +26,8 @@ import com.tans.tfiletranserdesktop.ui.resources.colorTeal200
 import com.tans.tfiletranserdesktop.ui.resources.colorTextGray
 import com.tans.tfiletranserdesktop.ui.resources.colorWhite
 import com.tans.tfiletranserdesktop.utils.readString
+import io.reactivex.subjects.PublishSubject
+import io.reactivex.subjects.Subject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx2.await
@@ -61,15 +68,46 @@ class FileTransferScreen(
     val remoteFolderContent = RemoteFolderContent(fileTransferScreen = this)
     val messageContent = MessageContent(fileTransferScreen = this)
 
+    val remoteMessageEvent: Subject<String> = PublishSubject.create<String>().toSerialized()
+    val remoteFolderModelEvent: Subject<ResponseFolderModel> = PublishSubject.create<ResponseFolderModel>().toSerialized()
+
     override fun initData() {
         launch(Dispatchers.IO) {
             val result = runCatching {
                 fileTransporter.launchFileTransport(isServer = asServer) {
 
+                    requestFolderChildrenShareChain { _, inputStream, limit, _ ->
+                        val string = inputStream.readString(limit)
+                        fileTransporter.writerHandleChannel.send(newFolderChildrenShareWriterHandle(string))
+                    }
+
+                    folderChildrenShareChain { _, inputStream, limit, _ ->
+                        val string = inputStream.readString(limit)
+                        val folderModel = moshi.adapter(ResponseFolderModel::class.java).fromJson(string)
+                        if (folderModel != null) {
+                            remoteFolderModelEvent.onNext(folderModel)
+                        }
+                    }
+
+                    requestFilesShareChain { _, inputStream, limit, _ ->
+                        val string = inputStream.readString(limit)
+                        val moshiType = Types.newParameterizedType(List::class.java, File::class.java)
+                        val files = moshi.adapter<List<File>>(moshiType).fromJson(string)
+                        if (files != null) {
+                            sendingFiles(files)
+                        }
+                    }
+
+                    filesShareDownloader { files, remoteAddress ->
+                        val result = runCatching {
+                            // TODO: Downloading Files.
+                        }
+                        true
+                    }
 
                     sendMessageChain { _, inputStream, limit, _ ->
-                        val remoteMessage = inputStream.readString(limit)
-                        println("RemoteMessage: $remoteMessage")
+                        val message = inputStream.readString(limit)
+                        remoteMessageEvent.onNext(message)
                     }
                 }
             }
@@ -87,6 +125,14 @@ class FileTransferScreen(
             myFolderContent.initData()
             remoteFolderContent.initData()
             messageContent.initData()
+        }
+    }
+
+    fun sendingFiles(files: List<File>) {
+        launch {
+            fileTransporter.writerHandleChannel.send(FilesShareWriterHandle(files = files) { files, localAddress ->
+                // TODO: Sending Files.
+            })
         }
     }
 
