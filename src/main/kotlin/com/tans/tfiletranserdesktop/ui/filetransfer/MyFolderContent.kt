@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.Checkbox
 import androidx.compose.material.Divider
 import androidx.compose.material.FloatingActionButton
@@ -91,7 +92,7 @@ fun FileList(fileTree: FileTree, selectedFiles: Set<CommonFileLeaf>, sortType: F
                                             onClick = { onClick(fileOrDir) }
                                     ),
                             verticalAlignment = Alignment.CenterVertically) {
-
+                        rememberScrollState(initial = 0)
                         Spacer(Modifier.width(20.dp))
                         Image(
                                 imageVector = vectorXmlResource(if (isDir) "images/folder_outline.xml" else "images/file_outline.xml"),
@@ -210,7 +211,25 @@ class MyFolderContent(val fileTransferScreen: FileTransferScreen) : BaseScreen<M
                     selectedFiles = selectedFiles,
                     sortType = sortType
                 ) { fileOrDir: FileLeaf ->  
-                    
+                    launch {
+                        updateState { oldState ->
+                            when (fileOrDir) {
+                                is CommonFileLeaf -> {
+                                    val oldSelectedFiles = oldState.selectedFiles
+                                    val newSelectedFiles = if (oldSelectedFiles.contains(fileOrDir)) {
+                                        oldSelectedFiles - fileOrDir
+                                    } else {
+                                        oldSelectedFiles + fileOrDir
+                                    }
+                                    oldState.copy(selectedFiles = newSelectedFiles)
+                                }
+
+                                is DirectoryFileLeaf -> {
+                                    oldState.copy(fileTree = fileOrDir.newSubTree(oldState.fileTree))
+                                }
+                            }
+                        }.await()
+                    }
                 }
             }
 
