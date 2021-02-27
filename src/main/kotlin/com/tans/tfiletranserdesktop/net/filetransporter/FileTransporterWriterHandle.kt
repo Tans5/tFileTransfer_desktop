@@ -4,10 +4,7 @@ import com.squareup.moshi.Types
 import com.tans.tfiletranserdesktop.core.Stateable
 import com.tans.tfiletranserdesktop.file.FileConstants
 import com.tans.tfiletranserdesktop.net.commonNetBufferPool
-import com.tans.tfiletranserdesktop.net.model.File
-import com.tans.tfiletranserdesktop.net.model.FileMd5
-import com.tans.tfiletranserdesktop.net.model.ResponseFolderModel
-import com.tans.tfiletranserdesktop.net.model.moshi
+import com.tans.tfiletranserdesktop.net.model.*
 import com.tans.tfiletranserdesktop.utils.getFilePathMd5
 import com.tans.tfiletranserdesktop.utils.toBytes
 import com.tans.tfiletranserdesktop.utils.writeDataLimit
@@ -107,7 +104,7 @@ class FolderChildrenShareWriterHandle(
 
     companion object {
         fun getJsonString(responseFolderModel: ResponseFolderModel): String {
-            return moshi.adapter(ResponseFolderModel::class.java).toJson(responseFolderModel) ?: ""
+            return ResponseFolderModelJsonAdapter(moshi).toJson(responseFolderModel) ?: ""
         }
     }
 }

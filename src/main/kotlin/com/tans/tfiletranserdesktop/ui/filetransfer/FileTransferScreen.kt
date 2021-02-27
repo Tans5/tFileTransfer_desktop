@@ -18,6 +18,7 @@ import com.tans.tfiletranserdesktop.net.filetransporter.FilesShareWriterHandle
 import com.tans.tfiletranserdesktop.net.filetransporter.launchFileTransport
 import com.tans.tfiletranserdesktop.net.model.File
 import com.tans.tfiletranserdesktop.net.model.ResponseFolderModel
+import com.tans.tfiletranserdesktop.net.model.ResponseFolderModelJsonAdapter
 import com.tans.tfiletranserdesktop.net.model.moshi
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.BaseScreen
@@ -83,7 +84,7 @@ class FileTransferScreen(
 
                     folderChildrenShareChain { _, inputStream, limit, _ ->
                         val string = inputStream.readString(limit)
-                        val folderModel = moshi.adapter(ResponseFolderModel::class.java).fromJson(string)
+                        val folderModel = ResponseFolderModelJsonAdapter(moshi).fromJson(string)
                         if (folderModel != null) {
                             remoteFolderModelEvent.onNext(folderModel)
                         }

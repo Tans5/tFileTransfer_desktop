@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.4.30"
+    kotlin("kapt") version "1.4.30"
     id("org.jetbrains.compose") version "0.3.0"
 }
 
@@ -29,6 +30,7 @@ dependencies {
     implementation("com.squareup.moshi:moshi:1.11.0")
     implementation("com.squareup.moshi:moshi-kotlin:1.11.0")
     implementation("com.squareup.moshi:moshi-adapters:1.11.0")
+    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.11.0")
 
     testImplementation("junit:junit:4.13.1")
 }

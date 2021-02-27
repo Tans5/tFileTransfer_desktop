@@ -5,7 +5,7 @@ import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
 
-@JsonClass(generateAdapter = false)
+@JsonClass(generateAdapter = true)
 data class ResponseFolderModel(
     val path: String,
     @Json(name = "children_folders") val childrenFolders: List<Folder>,
@@ -13,7 +13,7 @@ data class ResponseFolderModel(
 )
 
 
-@JsonClass(generateAdapter = false)
+@JsonClass(generateAdapter = true)
 data class Folder(
     val name: String,
     val path: String,
@@ -22,7 +22,7 @@ data class Folder(
 )
 
 
-@JsonClass(generateAdapter = false)
+@JsonClass(generateAdapter = true)
 data class File(
     val name: String,
     val path: String,
@@ -31,7 +31,7 @@ data class File(
 )
 
 
-@JsonClass(generateAdapter = false)
+@JsonClass(generateAdapter = true)
 data class FileMd5(
         /**
          * This is not file's md5, and use path of file calculate md5, because calculate big files' md5 too slow.
