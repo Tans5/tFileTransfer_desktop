@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "1.4.30"
     kotlin("kapt") version "1.4.30"
-    id("org.jetbrains.compose") version "0.3.0"
+    id("org.jetbrains.compose") version "0.3.1"
 }
 
 group = "me.tanstan"
