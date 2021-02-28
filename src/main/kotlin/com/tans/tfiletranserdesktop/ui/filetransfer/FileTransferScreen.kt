@@ -13,9 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.squareup.moshi.Types
 import com.tans.tfiletranserdesktop.net.RemoteDevice
-import com.tans.tfiletranserdesktop.net.filetransporter.FileTransporter
-import com.tans.tfiletranserdesktop.net.filetransporter.FilesShareWriterHandle
-import com.tans.tfiletranserdesktop.net.filetransporter.launchFileTransport
+import com.tans.tfiletranserdesktop.net.filetransporter.*
 import com.tans.tfiletranserdesktop.net.model.File
 import com.tans.tfiletranserdesktop.net.model.ResponseFolderModel
 import com.tans.tfiletranserdesktop.net.model.ResponseFolderModelJsonAdapter
@@ -30,6 +28,7 @@ import com.tans.tfiletranserdesktop.utils.readString
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx2.await
 import java.net.InetAddress
@@ -47,9 +46,32 @@ enum class ConnectStatus {
     Error
 }
 
+sealed class FileTransferDialog {
+    data class SendingFiles(
+        val transferServer: MultiConnectionsFileServer? = null,
+        val fileCount: Int,
+        val index: Int,
+        val fileName: String,
+        val fileSize: Long,
+        val sendSize: Long
+    ) : FileTransferDialog()
+
+    data class DownloadFiles(
+        val transferClient: MultiConnectionsFileTransferClient? = null,
+        val fileCount: Int,
+        val index: Int,
+        val fileName: String,
+        val fileSize: Long,
+        val downloadedSize: Long
+    ) : FileTransferDialog()
+
+    object None : FileTransferDialog()
+}
+
 data class FileTransferState(
     val selectedTab: FileTransferTab = FileTransferTab.MyFolder,
-    val connectStatus: ConnectStatus = ConnectStatus.Connecting
+    val connectStatus: ConnectStatus = ConnectStatus.Connecting,
+    val showDialog: FileTransferDialog = FileTransferDialog.None
 )
 
 class FileTransferScreen(
@@ -100,8 +122,64 @@ class FileTransferScreen(
                     }
 
                     filesShareDownloader { files, remoteAddress ->
-                        val result = runCatching {
-                            // TODO: Downloading Files.
+                        launch(Dispatchers.IO) {
+                            this@FileTransferScreen.updateState { oldState ->
+                                oldState.copy(
+                                    showDialog = FileTransferDialog.DownloadFiles(
+                                        fileCount = files.size,
+                                        index = 0,
+                                        fileName = files[0].file.name,
+                                        fileSize = files[0].file.size,
+                                        downloadedSize = 0L
+                                    )
+                                )
+                            }.await()
+                            val result = runCatching {
+                                for ((i, f) in files.withIndex()) {
+                                    this@FileTransferScreen.updateState { oldState ->
+                                        val dialogType = oldState.showDialog
+                                        if (dialogType is FileTransferDialog.DownloadFiles) {
+                                            oldState.copy(
+                                                showDialog = dialogType.copy(
+                                                    index = i,
+                                                    fileName = f.file.name,
+                                                    fileSize = f.file.size,
+                                                    downloadedSize = 0L)
+                                            )
+                                        } else {
+                                            oldState
+                                        }
+                                    }.await()
+
+                                    delay(200)
+                                    startMultiConnectionsFileClient(
+                                        fileMd5 = f,
+                                        serverAddress = remoteAddress,
+                                        clientInstance = { client ->
+                                            this@FileTransferScreen.updateState { oldState ->
+                                                val dialogType = oldState.showDialog
+                                                if (dialogType is FileTransferDialog.DownloadFiles) {
+                                                    oldState.copy(
+                                                        showDialog = dialogType.copy(transferClient = client)
+                                                    )
+                                                } else {
+                                                    oldState
+                                                }
+                                            }.await()
+                                        }) { hasDownload, _ ->
+                                        this@FileTransferScreen.updateState { oldState ->
+                                            val dialogType = oldState.showDialog
+                                            if (dialogType is FileTransferDialog.DownloadFiles) {
+                                                oldState.copy(showDialog = dialogType.copy(downloadedSize = hasDownload))
+                                            } else {
+                                                oldState
+                                            }
+                                        }.await()
+                                    }
+                                }
+                            }
+                            if (result.isFailure) { result.exceptionOrNull()?.printStackTrace() }
+                            this@FileTransferScreen.updateState { it.copy(showDialog = FileTransferDialog.None) }.await()
                         }
                         true
                     }
@@ -130,9 +208,65 @@ class FileTransferScreen(
     }
 
     fun sendingFiles(files: List<File>) {
-        launch {
+        launch(Dispatchers.IO) {
             fileTransporter.writerHandleChannel.send(FilesShareWriterHandle(files = files) { files, localAddress ->
-                // TODO: Sending Files.
+                this@FileTransferScreen.updateState { oldState ->
+                    oldState.copy(showDialog = FileTransferDialog.SendingFiles(
+                        fileCount = files.size,
+                        index = 0,
+                        fileName = files[0].file.name,
+                        fileSize = files[0].file.size,
+                        sendSize = 0L
+                    ))
+                }.await()
+                val result = runCatching {
+                    for ((i, file) in files.withIndex()) {
+                        this@FileTransferScreen.updateState { oldState ->
+                            val dialogType = oldState.showDialog
+                            if (dialogType is FileTransferDialog.SendingFiles) {
+                                oldState.copy(
+                                    showDialog = dialogType.copy(
+                                        index = i,
+                                        fileName = file.file.name,
+                                        fileSize = file.file.size,
+                                        sendSize = 0L
+                                    )
+                                )
+                            } else {
+                                oldState
+                            }
+                        }.await()
+                        startMultiConnectionsFileServer(
+                            fileMd5 = file,
+                            localAddress = localAddress,
+                            serverInstance = { server ->
+                                this@FileTransferScreen.updateState { oldState ->
+                                    val dialogType = oldState.showDialog
+                                    if (dialogType is FileTransferDialog.SendingFiles) {
+                                        oldState.copy(showDialog = dialogType.copy(transferServer = server))
+                                    } else {
+                                        oldState
+                                    }
+                                }.await()
+                            }
+                        ) { hasSend, _ ->
+                            this@FileTransferScreen.updateState { oldState ->
+                                val dialogType = oldState.showDialog
+                                if (dialogType is FileTransferDialog.SendingFiles) {
+                                    oldState.copy(showDialog = dialogType.copy(sendSize = hasSend))
+                                } else {
+                                    oldState
+                                }
+                            }.await()
+                        }
+                    }
+                }
+                if (result.isFailure) {
+                    result.exceptionOrNull()?.printStackTrace()
+                }
+                this@FileTransferScreen.updateState { oldState ->
+                    oldState.copy(showDialog = FileTransferDialog.None)
+                }.await()
             })
         }
     }
