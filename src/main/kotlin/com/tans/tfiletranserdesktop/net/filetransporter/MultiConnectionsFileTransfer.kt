@@ -304,7 +304,7 @@ class MultiConnectionsFileTransferClient(
         val jobs = bindState().firstOrError().await()
         for (job in jobs) {
             if (job.isActive) {
-                job.cancel("Cancel by handle.")
+                job.cancel("Cancel by hand.")
             }
         }
         if (Files.exists(path)) { Files.delete(path) }

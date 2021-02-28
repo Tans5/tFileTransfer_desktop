@@ -122,7 +122,19 @@ class RemoteFolderContent(val fileTransferScreen: FileTransferScreen)
             }
 
             Box(modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp)) {
-                FloatingActionButton(onClick = {}) {
+                FloatingActionButton(onClick = {
+                    launch {
+                        val selectFiles = bindState().map { it.selectedFiles }.firstOrError().await()
+                        if (selectFiles.isNotEmpty()) {
+                            fileTransferScreen.fileTransporter.startWriterHandleWhenFinish(
+                                newRequestFilesShareWriterHandle(selectFiles.map { it.toFile() })
+                            )
+                            updateState { oldState ->
+                                oldState.copy(selectedFiles = emptySet())
+                            }.await()
+                        }
+                    }
+                }) {
                     Image(imageVector = vectorXmlResource("images/download_outline.xml"), contentDescription = null)
                 }
             }

@@ -234,7 +234,17 @@ class MyFolderContent(val fileTransferScreen: FileTransferScreen) : BaseScreen<M
             }
 
             Box(modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp)) {
-                FloatingActionButton(onClick = {}) {
+                FloatingActionButton(onClick = {
+                    launch {
+                        val selectFiles = bindState().map { it.selectedFiles }.firstOrError().await()
+                        if (selectFiles.isNotEmpty()) {
+                            fileTransferScreen.sendingFiles(selectFiles.map { it.toFile() })
+                        }
+                        updateState { oldState ->
+                            oldState.copy(selectedFiles = emptySet())
+                        }.await()
+                    }
+                }) {
                     Image(imageVector = vectorXmlResource("images/share_variant_outline.xml"), contentDescription = null)
                 }
             }
