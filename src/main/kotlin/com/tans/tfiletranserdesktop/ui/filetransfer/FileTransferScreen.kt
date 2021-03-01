@@ -396,8 +396,8 @@ class FileTransferScreen(
 
                         val dialogType = bindState().map { it.showDialog }.distinctUntilChanged().subscribeAsState(FileTransferDialog.None)
                         when (val dialog = dialogType.value) {
-                            is FileTransferDialog.SendingFiles -> SendingFilesDialog(dialog)
-                            is FileTransferDialog.DownloadFiles -> DownloadFilesDialog(dialog)
+                            is FileTransferDialog.SendingFiles -> FileTransferDialog(dialog)
+                            is FileTransferDialog.DownloadFiles -> FileTransferDialog(dialog)
                             FileTransferDialog.None -> { }
                         }
                     }
@@ -409,104 +409,64 @@ class FileTransferScreen(
     }
 
     @Composable
-    fun SendingFilesDialog(dialog: FileTransferDialog.SendingFiles) {
-        Box(modifier = Modifier.fillMaxSize().clickable { }, contentAlignment = Alignment.Center) {
-            Card(
-                modifier = Modifier.width(350.dp),
-                backgroundColor = colorWhite,
-                shape = RoundedCornerShape(4.dp),
-                elevation = 8.dp
-            ) {
-
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(start = 15.dp, top = 17.dp, end = 15.dp, bottom = 5.dp)
+    fun FileTransferDialog(dialog: FileTransferDialog) {
+        if (dialog is FileTransferDialog.DownloadFiles || dialog is FileTransferDialog.SendingFiles) {
+            Box(modifier = Modifier.fillMaxSize().clickable { }, contentAlignment = Alignment.Center) {
+                Card(
+                    modifier = Modifier.width(350.dp),
+                    backgroundColor = colorWhite,
+                    shape = RoundedCornerShape(4.dp),
+                    elevation = 8.dp
                 ) {
-                    Text(
-                        text = "Sending Files (${dialog.index + 1}/${dialog.fileCount})",
-                        style = styleDialogTitle
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        text = dialog.fileName,
-                        style = styleDialogBody
-                    )
-                    Spacer(Modifier.height(15.dp))
-                    LinearProgressIndicator(
-                        progress = (dialog.sendSize.toDouble() / dialog.fileSize.toDouble()).toFloat(),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = "${getSizeString(dialog.sendSize)}/${getSizeString(dialog.fileSize)}",
-                        modifier = Modifier.align(BiasAlignment.Horizontal(1f)),
-                        style = TextStyle(color = colorTextGray, fontSize = 12.sp)
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    TextButton(
-                        modifier = Modifier.align(BiasAlignment.Horizontal(1f)),
-                        onClick = {
-                            launch {
-                                val dialogType = bindState().map { it.showDialog }.firstOrError().await()
-                                if (dialogType is FileTransferDialog.SendingFiles) {
-                                    dialogType.transferServer?.cancel()
+
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(start = 15.dp, top = 17.dp, end = 15.dp, bottom = 5.dp)
+                    ) {
+                        Text(
+                            text = if (dialog is FileTransferDialog.SendingFiles) "Sending Files (${dialog.index + 1}/${dialog.fileCount})"
+                            else "Downloading Files (${(dialog as FileTransferDialog.DownloadFiles).index + 1}/${dialog.fileCount})",
+                            style = styleDialogTitle
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            text = if (dialog is FileTransferDialog.SendingFiles) dialog.fileName else (dialog as FileTransferDialog.DownloadFiles).fileName,
+                            style = styleDialogBody
+                        )
+                        Spacer(Modifier.height(15.dp))
+                        val process = if (dialog is FileTransferDialog.SendingFiles) {
+                            (dialog.sendSize.toDouble() / dialog.fileSize.toDouble()).toFloat()
+                        } else {
+                            ((dialog as FileTransferDialog.DownloadFiles).downloadedSize.toDouble() / dialog.fileSize.toDouble()).toFloat()
+                        }
+                        LinearProgressIndicator(
+                            progress = process,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(Modifier.height(2.dp))
+                        val processText = if (dialog is FileTransferDialog.SendingFiles) {
+                            "${getSizeString(dialog.sendSize)}/${getSizeString(dialog.fileSize)}"
+                        } else {
+                            "${getSizeString((dialog as FileTransferDialog.DownloadFiles).downloadedSize)}/${getSizeString(dialog.fileSize)}"
+                        }
+                        Text(
+                            text = processText,
+                            modifier = Modifier.align(BiasAlignment.Horizontal(1f)),
+                            style = TextStyle(color = colorTextGray, fontSize = 12.sp)
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        TextButton(
+                            modifier = Modifier.align(BiasAlignment.Horizontal(1f)),
+                            onClick = {
+                                launch {
+                                    val dialogType = bindState().map { it.showDialog }.firstOrError().await()
+                                    if (dialogType is FileTransferDialog.SendingFiles) {
+                                        dialogType.transferServer?.cancel()
+                                    }
                                 }
                             }
+                        ) {
+                            Text(stringBroadcastSenderDialogCancel)
                         }
-                    ) {
-                        Text(stringBroadcastSenderDialogCancel)
-                    }
-                }
-            }
-        }
-    }
-
-    @Composable
-    fun DownloadFilesDialog(dialog: FileTransferDialog.DownloadFiles) {
-
-        Box(modifier = Modifier.fillMaxSize().clickable { }, contentAlignment = Alignment.Center) {
-            Card(
-                modifier = Modifier.width(350.dp),
-                backgroundColor = colorWhite,
-                shape = RoundedCornerShape(4.dp),
-                elevation = 8.dp
-            ) {
-
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(start = 15.dp, top = 17.dp, end = 15.dp, bottom = 5.dp)
-                ) {
-                    Text(
-                        text = "Downloading Files (${dialog.index + 1}/${dialog.fileCount})",
-                        style = styleDialogTitle
-                    )
-                    Spacer(Modifier.height(6.dp))
-                    Text(
-                        text = dialog.fileName,
-                        style = styleDialogBody
-                    )
-                    Spacer(Modifier.height(15.dp))
-                    LinearProgressIndicator(
-                        progress = (dialog.downloadedSize.toDouble() / dialog.fileSize.toDouble()).toFloat(),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        text = "${getSizeString(dialog.downloadedSize)}/${getSizeString(dialog.fileSize)}",
-                        modifier = Modifier.align(BiasAlignment.Horizontal(1f)),
-                        style = TextStyle(color = colorTextGray, fontSize = 12.sp)
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    TextButton(
-                        modifier = Modifier.align(BiasAlignment.Horizontal(1f)),
-                        onClick = {
-                            launch {
-                                val dialogType = bindState().map { it.showDialog }.firstOrError().await()
-                                if (dialogType is FileTransferDialog.DownloadFiles) {
-                                    dialogType.transferClient?.cancel()
-                                }
-                            }
-                        }
-                    ) {
-                        Text(stringBroadcastSenderDialogCancel)
                     }
                 }
             }
