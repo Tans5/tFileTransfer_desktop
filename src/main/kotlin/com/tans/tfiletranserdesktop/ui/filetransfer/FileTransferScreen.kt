@@ -442,7 +442,7 @@ class FileTransferScreen(
                             progress = process,
                             modifier = Modifier.fillMaxWidth()
                         )
-                        Spacer(Modifier.height(2.dp))
+                        Spacer(Modifier.height(4.dp))
                         val processText = if (dialog is FileTransferDialog.SendingFiles) {
                             "${getSizeString(dialog.sendSize)}/${getSizeString(dialog.fileSize)}"
                         } else {

@@ -133,13 +133,13 @@ class MessageContent(
                         }
                     }
                     Divider(modifier = Modifier.fillMaxWidth().height(1.dp))
-                    Row(modifier = Modifier.fillMaxWidth().height(75.dp).background(color = colorWhite)
+                    Row(modifier = Modifier.fillMaxWidth().background(color = colorWhite)
                         .padding(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 10.dp)) {
                         val input = remember { mutableStateOf("") }
                         OutlinedTextField(
                             value = input.value,
                             onValueChange = { newValue -> input.value = newValue },
-                            modifier = Modifier.fillMaxHeight().weight(1f),
+                            modifier = Modifier.weight(1f),
                             placeholder = {
                                 Text("Input Message.")
                             },
