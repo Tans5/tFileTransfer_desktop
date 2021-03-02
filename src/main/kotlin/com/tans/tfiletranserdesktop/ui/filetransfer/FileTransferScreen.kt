@@ -442,7 +442,7 @@ class FileTransferScreen(
                             progress = process,
                             modifier = Modifier.fillMaxWidth()
                         )
-                        Spacer(Modifier.height(4.dp))
+                        Spacer(Modifier.height(8.dp))
                         val processText = if (dialog is FileTransferDialog.SendingFiles) {
                             "${getSizeString(dialog.sendSize)}/${getSizeString(dialog.fileSize)}"
                         } else {
@@ -461,6 +461,9 @@ class FileTransferScreen(
                                     val dialogType = bindState().map { it.showDialog }.firstOrError().await()
                                     if (dialogType is FileTransferDialog.SendingFiles) {
                                         dialogType.transferServer?.cancel()
+                                    }
+                                    if (dialogType is FileTransferDialog.DownloadFiles) {
+                                        dialogType.transferClient?.cancel()
                                     }
                                 }
                             }
