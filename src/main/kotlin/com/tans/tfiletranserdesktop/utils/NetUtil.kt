@@ -148,8 +148,12 @@ fun findLocalAddressV4(): List<InetAddress> {
 
 fun InetAddress.getBroadcastAddress()
         : Pair<InetAddress, Short> = NetworkInterface.getByInetAddress(this).interfaceAddresses
-        .mapNotNull { it.broadcast to it.networkPrefixLength }
-        .firstOrNull() ?: (InetAddress.getByAddress((-1).toBytes()) to 24.toShort())
+    .filter {
+        val broadcast = it.broadcast
+        broadcast != null && broadcast.address?.size == 4
+    }
+    .mapNotNull { it.broadcast to it.networkPrefixLength }
+    .firstOrNull() ?: (InetAddress.getByAddress((-1).toBytes()) to 24.toShort())
 
 fun ByteBuffer.copyAvailableBytes(): ByteArray {
     val position = position()
