@@ -267,7 +267,9 @@ class MultiConnectionsFileTransferClient(
                 val fileChannel = file.channel
                 file.use {
                     fileChannel.use {
-                        val fileLock = fileChannel.lock(start, limitReadSize, true)
+                        if (currentUseOs != DesktopOs.Windows) {
+                            val fileLock = fileChannel.lock(start, limitReadSize, true)
+                        }
                         while (true) {
                             val thisTimeRead = if (bufferSize + hasRead >= limitReadSize) {
                                 (limitReadSize - hasRead).toInt()

@@ -7,6 +7,8 @@ enum class DesktopOs {
     Linux
 }
 
+val currentUseOs = getCurrentOs()
+
 fun getCurrentOs(): DesktopOs {
     val os = System.getProperty("os.name")
     return when {

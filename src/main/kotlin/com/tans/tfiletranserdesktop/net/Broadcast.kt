@@ -214,8 +214,7 @@ class BroadcastReceiver(
                 dc.socket().soTimeout = Int.MAX_VALUE
                 dc.setOptionSuspend(StandardSocketOptions.SO_BROADCAST, true)
                 dc.setOptionSuspend(StandardSocketOptions.SO_REUSEADDR, true)
-                val currentOs = getCurrentOs()
-                dc.bindSuspend(InetSocketAddress(if (noneBroadcast || currentOs == DesktopOs.Windows) localAddress else broadcast, BROADCAST_RECEIVER_PORT))
+                dc.bindSuspend(InetSocketAddress(if (noneBroadcast || currentUseOs == DesktopOs.Windows) localAddress else broadcast, BROADCAST_RECEIVER_PORT))
                 val byteBuffer = ByteBuffer.allocate(NET_BUFFER_SIZE)
                 while (true) {
                     byteBuffer.clear()
