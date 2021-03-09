@@ -19,6 +19,7 @@ import java.nio.channels.AsynchronousSocketChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.max
 
@@ -83,20 +84,25 @@ class MultiConnectionsFileServer(
             ssc.setOptionSuspend(StandardSocketOptions.SO_REUSEADDR, true)
             ssc.bindSuspend(InetSocketAddress(localAddress, MULTI_CONNECTIONS_FILES_TRANSFER_PORT), MULTI_CONNECTIONS_MAX)
             val job = launch(Dispatchers.IO) {
-                var errorTimes: Int = 0
+                val errorTimes: AtomicInteger = AtomicInteger(0)
                 while (true) {
-                    val client = ssc.acceptSuspend()
-                    launch(Dispatchers.IO) {
-                        val result = kotlin.runCatching {
-                            newClient(client)
-                        }
-                        if (result.isFailure) {
-                            println("startMultiConnectionsFileServer , startMultiConnectionsFileServer ${result.exceptionOrNull()}")
-                            errorTimes++
-                            if (errorTimes >= MULTI_CONNECTIONS_MAX_SERVER_ERROR_TIMES) {
-                                throw result.exceptionOrNull()!!
+                    val clientResult = kotlin.runCatching {
+                        ssc.acceptSuspend()
+                    }
+                    if (clientResult.isSuccess) {
+                        launch(Dispatchers.IO) {
+                            val result = kotlin.runCatching {
+                                newClient(clientResult.getOrThrow())
+                            }
+                            if (result.isFailure) {
+                                println("startMultiConnectionsFileServer , startMultiConnectionsFileServer ${result.exceptionOrNull()}")
+                                if (errorTimes.addAndGet(1) >= MULTI_CONNECTIONS_MAX_SERVER_ERROR_TIMES) {
+                                    throw result.exceptionOrNull()!!
+                                }
                             }
                         }
+                    } else {
+                        clientResult.exceptionOrNull()?.printStackTrace()
                     }
                 }
             }
