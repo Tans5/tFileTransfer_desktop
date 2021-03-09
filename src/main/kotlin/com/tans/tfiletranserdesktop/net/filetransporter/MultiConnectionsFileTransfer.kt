@@ -79,7 +79,10 @@ class MultiConnectionsFileServer(
 
     private val finishCheckChannel = Channel<Unit>(1)
 
+    var mainCoroutineScope: CoroutineScope? = null
+
     internal suspend fun start() = coroutineScope {
+        mainCoroutineScope = this
         ssc.use {
             ssc.setOptionSuspend(StandardSocketOptions.SO_REUSEADDR, true)
             ssc.bindSuspend(InetSocketAddress(localAddress, MULTI_CONNECTIONS_FILES_TRANSFER_PORT), MULTI_CONNECTIONS_MAX)
@@ -106,7 +109,7 @@ class MultiConnectionsFileServer(
                         }
                     } else {
                         clientResult.exceptionOrNull()?.printStackTrace()
-                        if (progressLong.get() >= file.size || !isActive) {
+                        if (progressLong.get() >= file.size || !isActive || !ssc.isOpen) {
                             break
                         }
                     }
@@ -118,6 +121,7 @@ class MultiConnectionsFileServer(
     }
 
     suspend fun cancel() {
+        mainCoroutineScope?.cancel("Canceled by user.")
         if (ssc.isOpen) ssc.close()
     }
 
