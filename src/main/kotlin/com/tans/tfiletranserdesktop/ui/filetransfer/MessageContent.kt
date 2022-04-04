@@ -153,7 +153,7 @@ class MessageContent(
                                     val inputLocal = input.value
                                     if (inputLocal.isNotBlank()) {
                                         val connection = fileTransferScreen.getFileExploreConnection().await()
-                                        connection.newRemoteFileExploreContent(MessageModel(inputLocal))
+                                        connection.sendFileExploreContentToRemote(MessageModel(inputLocal))
                                         updateState { oldState ->
                                             val newMessage = Message(
                                                 isRemote = false,

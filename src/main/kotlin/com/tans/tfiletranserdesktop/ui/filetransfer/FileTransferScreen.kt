@@ -181,13 +181,11 @@ class FileTransferScreen(
                         }
 
                         is RequestFilesModel -> {
-                            runBlocking(context = this.coroutineContext) {
-                                fileConnection.sendFileExploreContentToRemote(
-                                    fileExploreContent = ShareFilesModel(shareFiles = it.requestFiles),
-                                    waitReplay = true
-                                )
-                                sendingFiles(it.requestFiles)
-                            }
+                            fileConnection.sendFileExploreContentToRemote(
+                                fileExploreContent = ShareFilesModel(shareFiles = it.requestFiles),
+                                waitReplay = true
+                            )
+                            sendingFiles(it.requestFiles)
                         }
 
                         is ShareFilesModel -> {
