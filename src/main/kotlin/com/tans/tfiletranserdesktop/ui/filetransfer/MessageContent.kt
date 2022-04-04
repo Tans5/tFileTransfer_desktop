@@ -13,7 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.vectorXmlResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -168,7 +168,7 @@ class MessageContent(
                             },
                             modifier = Modifier.align(Alignment.CenterVertically)
                         ) {
-                            Image(imageVector = vectorXmlResource("images/send.xml"), contentDescription = null)
+                            Image(painter = painterResource("images/send.xml"), contentDescription = null)
                         }
                     }
                 }

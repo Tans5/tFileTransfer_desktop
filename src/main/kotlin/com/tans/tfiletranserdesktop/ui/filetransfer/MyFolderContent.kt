@@ -15,7 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.vectorXmlResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -95,7 +95,7 @@ fun FileList(fileTree: FileTree, selectedFiles: Set<CommonFileLeaf>, sortType: F
                         rememberScrollState(initial = 0)
                         Spacer(Modifier.width(20.dp))
                         Image(
-                                imageVector = vectorXmlResource(if (isDir) "images/folder_outline.xml" else "images/file_outline.xml"),
+                                painter = painterResource(if (isDir) "images/folder_outline.xml" else "images/file_outline.xml"),
                                 contentDescription = null,
                                 modifier = Modifier.width(25.dp).height(25.dp))
                         Spacer(Modifier.width(20.dp))
@@ -129,7 +129,7 @@ fun FileList(fileTree: FileTree, selectedFiles: Set<CommonFileLeaf>, sortType: F
                         Spacer(Modifier.width(15.dp))
                         if (isDir) {
                             Image(
-                                    imageVector = vectorXmlResource("images/chevron_right.xml"),
+                                    painter = painterResource("images/chevron_right.xml"),
                                     contentDescription = null
                             )
                         } else {
@@ -245,7 +245,7 @@ class MyFolderContent(val fileTransferScreen: FileTransferScreen) : BaseScreen<M
                         }.await()
                     }
                 }) {
-                    Image(imageVector = vectorXmlResource("images/share_variant_outline.xml"), contentDescription = null)
+                    Image(painter = painterResource("images/share_variant_outline.xml"), contentDescription = null)
                 }
             }
         }

@@ -8,7 +8,7 @@ import androidx.compose.material.FloatingActionButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.vectorXmlResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.tans.tfiletranserdesktop.file.*
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
@@ -135,7 +135,7 @@ class RemoteFolderContent(val fileTransferScreen: FileTransferScreen)
                         }
                     }
                 }) {
-                    Image(imageVector = vectorXmlResource("images/download_outline.xml"), contentDescription = null)
+                    Image(painter = painterResource("images/download_outline.xml"), contentDescription = null)
                 }
             }
 

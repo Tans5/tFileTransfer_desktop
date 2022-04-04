@@ -1,6 +1,10 @@
-import androidx.compose.desktop.Window
-import androidx.compose.ui.unit.IntSize
+
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.WindowState
+import androidx.compose.ui.window.singleWindowApplication
 import com.tans.tfiletranserdesktop.ui.resources.stringAppName
 import com.tans.tfiletranserdesktop.ui.startDefaultScreenRoute
 
-fun main() = Window(resizable = false, title = stringAppName, size = IntSize(800, 800)) { startDefaultScreenRoute() }
+fun main() = singleWindowApplication(resizable = false, title = stringAppName, state = WindowState(width = 800.dp, height = 800.dp)) {
+    startDefaultScreenRoute()
+}
