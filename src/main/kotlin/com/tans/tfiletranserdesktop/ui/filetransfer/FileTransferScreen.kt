@@ -30,6 +30,7 @@ import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
 import com.tans.tfiletranserdesktop.ui.resources.*
 import com.tans.tfiletranserdesktop.utils.getSizeString
+import com.tans.tfiletranserdesktop.utils.ioExecutor
 import com.tans.tfiletranserdesktop.utils.newChildFile
 import io.reactivex.Single
 import io.reactivex.rxkotlin.ofType
@@ -156,7 +157,7 @@ class FileTransferScreen(
                                                 lastModify = lastModify
                                             )
                                         }
-                                    }.toArray().filterIsInstance<YoungLeaf>()
+                                    }.toArray().toList()
 
                             } else {
                                 emptyList()
@@ -544,6 +545,9 @@ class FileTransferScreen(
         myFolderContent.stop(screenRoute)
         remoteFolderContent.stop(screenRoute)
         messageContent.stop(screenRoute)
+        ioExecutor.execute {
+            getFileExploreConnection().blockingGet().close(true)
+        }
     }
 
 }

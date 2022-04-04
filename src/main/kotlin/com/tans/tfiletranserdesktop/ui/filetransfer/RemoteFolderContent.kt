@@ -47,7 +47,7 @@ class RemoteFolderContent(val fileTransferScreen: FileTransferScreen)
                     if (!oldTree.notNeedRefresh) {
                         rxSingle {
                             updateState { it.copy(loadingDir = true) }.await()
-                            fileConnection.newRemoteFileExploreContent(RequestFolderModel(oldTree.path))
+                            fileConnection.sendFileExploreContentToRemote(RequestFolderModel(oldTree.path))
                             fileTransferScreen.remoteFolderModelEvent.firstOrError()
                                 .flatMap { remoteFolder ->
                                     if (remoteFolder.path == oldTree.path) {
