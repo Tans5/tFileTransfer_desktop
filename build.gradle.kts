@@ -31,6 +31,8 @@ dependencies {
     implementation("com.squareup.moshi:moshi-adapters:1.13.0")
     kapt("com.squareup.moshi:moshi-kotlin-codegen:1.13.0")
 
+    implementation("io.netty:netty-all:4.1.63.Final")
+
     testImplementation("junit:junit:4.13.2")
 }
 

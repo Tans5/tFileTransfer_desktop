@@ -2,6 +2,7 @@ package com.tans.tfiletranserdesktop.net.filetransporter
 
 import com.tans.tfiletranserdesktop.core.Stateable
 import com.tans.tfiletranserdesktop.file.FileConstants
+import com.tans.tfiletranserdesktop.net.FILE_TRANSPORT_LISTEN_PORT
 import com.tans.tfiletranserdesktop.net.commonNetBufferPool
 import com.tans.tfiletranserdesktop.utils.*
 import kotlinx.coroutines.*
@@ -13,7 +14,6 @@ import java.net.InetSocketAddress
 import java.net.StandardSocketOptions
 import java.nio.channels.AsynchronousSocketChannel
 
-const val FILE_TRANSPORT_LISTEN_PORT = 6668
 
 const val VERSION_INT: Byte = 0x01
 

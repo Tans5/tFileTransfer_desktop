@@ -11,6 +11,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tans.tfiletranserdesktop.net.LOCAL_DEVICE
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
@@ -43,12 +44,10 @@ class BroadcastScreen : BaseScreen<BroadcastState>(BroadcastState()) {
         launch {
             updateState { oldState ->
                 val localAddresses = findLocalAddressV4()
-                val username = System.getProperty("user.name")
-                val deviceName = getCurrentOs().name
                 oldState.copy(
                     addresses = localAddresses,
                     selectAddressIndex = if (localAddresses.isEmpty()) Optional.empty<Int>() else Optional.of(0),
-                    localDeviceInfo = "$username's $deviceName"
+                    localDeviceInfo = LOCAL_DEVICE
                 )
             }.await()
         }

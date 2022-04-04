@@ -23,14 +23,6 @@ const val BROADCAST_SERVER_ACCEPT: Byte = 0x00
 const val BROADCAST_SERVER_DENY: Byte = 0x01
 
 
-// 512 KB
-const val NET_BUFFER_SIZE = 1024 * 512
-
-val commonNetBufferPool = NetBufferPool(
-        poolSize = 100,
-        bufferSize = NET_BUFFER_SIZE
-)
-
 typealias RemoteDevice = Pair<SocketAddress, String>
 
 /**

@@ -456,3 +456,7 @@ suspend fun InputStream.readString(limit: Long): String {
     outputStream.close()
     return String(bytes, Charsets.UTF_8)
 }
+
+val ioExecutor by lazy {
+    Dispatchers.IO.asExecutor()
+}
