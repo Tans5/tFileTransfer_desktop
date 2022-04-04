@@ -6,28 +6,17 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
+const val BROADCAST_RECEIVER_PORT = 6666
+const val BROADCAST_LISTENER_PORT = 6667
 
-// UDP Porter
-const val UDP_BROADCAST_RECEIVER_PORT = 6666
-// TCP Porter
-const val UDP_BROADCAST_LISTENER_PORT = 6667
-const val UDP_BROADCAST_SERVER_ACCEPT: Byte = 0x00
-const val UDP_BROADCAST_SERVER_DENY: Byte = 0x01
+const val BROADCAST_SERVER_ACCEPT: Byte = 0x00
+const val BROADCAST_SERVER_DENY: Byte = 0x01
 
 // TCP Porter
 const val FILE_TRANSPORT_LISTEN_PORT = 6668
 
 // TCP Porter
 const val MULTI_CONNECTIONS_FILES_TRANSFER_LISTEN_PORT = 6669
-
-// TCP Porter
-const val TCP_SCAN_CONNECT_LISTEN_PORTER = 7000
-
-// TCP Porter
-const val FILE_WIFI_P2P_CONNECT_LISTEN_PORT = 7001
-
-// TCP Porter
-const val FILE_WIFI_P2P_FILE_TRANSFER_LISTEN_PORT = 7002
 
 val USER_NAME = System.getProperty("user.name") ?: ""
 val DEVICE_NAME = getCurrentOs().name

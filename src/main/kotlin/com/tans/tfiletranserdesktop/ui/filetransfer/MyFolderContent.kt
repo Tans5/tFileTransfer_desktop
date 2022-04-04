@@ -37,7 +37,6 @@ import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import kotlin.io.path.isReadable
 import kotlin.streams.toList
 
 enum class FileSortType {
@@ -164,24 +163,26 @@ class MyFolderContent(val fileTransferScreen: FileTransferScreen) : BaseScreen<M
                                 Files.list(path)
                                     .filter { Files.isReadable(it) }
                                     .map { p ->
-                                    if (Files.isDirectory(p)) {
-                                        DirectoryYoungLeaf(
-                                            name = p.fileName.toString(),
-                                            childrenCount = Files.list(p).let { s ->
-                                                val size = s.count()
-                                                s.close()
-                                                size
-                                            },
-                                            lastModified = Files.getLastModifiedTime(p).toMillis()
-                                        )
-                                    } else {
-                                        FileYoungLeaf(
-                                            name = p.fileName.toString(),
-                                            size = Files.size(p),
-                                            lastModified = Files.getLastModifiedTime(p).toMillis()
-                                        )
+                                        if (Files.isDirectory(p)) {
+                                            DirectoryYoungLeaf(
+                                                name = p.fileName.toString(),
+                                                childrenCount = Files.list(p).let { s ->
+                                                    val size = s.count()
+                                                    s.close()
+                                                    size
+                                                },
+                                                lastModified = Files.getLastModifiedTime(p).toMillis()
+                                            )
+                                        } else {
+                                            FileYoungLeaf(
+                                                name = p.fileName.toString(),
+                                                size = Files.size(p),
+                                                lastModified = Files.getLastModifiedTime(p).toMillis()
+                                            )
+                                        }
                                     }
-                                }.toList()
+                                    .toArray()
+                                    .filterIsInstance<YoungLeaf>()
                             } else {
                                 emptyList()
                             }

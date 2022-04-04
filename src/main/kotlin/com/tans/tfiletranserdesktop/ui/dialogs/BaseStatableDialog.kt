@@ -10,7 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tans.tfiletranserdesktop.core.Stateable
-import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.resources.colorWhite
 import com.tans.tfiletranserdesktop.ui.resources.colorDialogBg
 import kotlinx.coroutines.CoroutineScope

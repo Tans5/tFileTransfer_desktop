@@ -77,6 +77,6 @@ class OffsetDataTimeJsonAdapter : JsonAdapter<OffsetDateTime>() {
 
 }
 
-val moshi = Moshi.Builder()
+val moshi: Moshi = Moshi.Builder()
     .add(OffsetDateTime::class.java, OffsetDataTimeJsonAdapter())
     .build()
