@@ -18,6 +18,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tans.tfiletranserdesktop.net.model.MessageModel
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
@@ -151,9 +152,8 @@ class MessageContent(
                                 launch {
                                     val inputLocal = input.value
                                     if (inputLocal.isNotBlank()) {
-                                        fileTransferScreen.fileTransporter.startWriterHandleWhenFinish(
-                                            newSendMessageShareWriterHandle(inputLocal)
-                                        )
+                                        val connection = fileTransferScreen.getFileExploreConnection().await()
+                                        connection.newRemoteFileExploreContent(MessageModel(inputLocal))
                                         updateState { oldState ->
                                             val newMessage = Message(
                                                 isRemote = false,

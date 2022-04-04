@@ -11,14 +11,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.tans.tfiletranserdesktop.file.*
+import com.tans.tfiletranserdesktop.net.model.FileMd5
+import com.tans.tfiletranserdesktop.net.model.RequestFilesModel
+import com.tans.tfiletranserdesktop.net.model.RequestFolderModel
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
 import com.tans.tfiletranserdesktop.ui.dialogs.LoadingDialog
+import com.tans.tfiletranserdesktop.utils.getFilePathMd5
 import io.reactivex.Single
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx2.await
 import kotlinx.coroutines.rx2.rxSingle
+import java.nio.file.Paths
 
 data class RemoteFolderContentState(
     val fileTree: FileTree = newRootFileTree(),
@@ -32,7 +37,9 @@ class RemoteFolderContent(val fileTransferScreen: FileTransferScreen)
 
     override fun initData() {
         launch {
-            updateState { it.copy(fileTree = newRootFileTree(path = fileTransferScreen.remoteFileSeparator)) }.await()
+            val handshakeModel = fileTransferScreen.getFileExploreHandshakeModel().await()
+            val fileConnection = fileTransferScreen.getFileExploreConnection().await()
+            updateState { it.copy(fileTree = newRootFileTree(path = handshakeModel.pathSeparator)) }.await()
             bindState()
                 .map { it.fileTree }
                 .distinctUntilChanged()
@@ -40,9 +47,7 @@ class RemoteFolderContent(val fileTransferScreen: FileTransferScreen)
                     if (!oldTree.notNeedRefresh) {
                         rxSingle {
                             updateState { it.copy(loadingDir = true) }.await()
-                            fileTransferScreen.fileTransporter.writerHandleChannel.send(
-                                newRequestFolderChildrenShareWriterHandle(oldTree.path)
-                            )
+                            fileConnection.newRemoteFileExploreContent(RequestFolderModel(oldTree.path))
                             fileTransferScreen.remoteFolderModelEvent.firstOrError()
                                 .flatMap { remoteFolder ->
                                     if (remoteFolder.path == oldTree.path) {
@@ -67,7 +72,7 @@ class RemoteFolderContent(val fileTransferScreen: FileTransferScreen)
                                             oldState.copy(
                                                 fileTree = children.refreshFileTree(
                                                     parentTree = oldTree,
-                                                    dirSeparator = fileTransferScreen.remoteFileSeparator
+                                                    dirSeparator = handshakeModel.pathSeparator
                                                 ), selectedFiles = emptySet()
                                             )
                                         }.map {
@@ -126,9 +131,8 @@ class RemoteFolderContent(val fileTransferScreen: FileTransferScreen)
                     launch {
                         val selectFiles = bindState().map { it.selectedFiles }.firstOrError().await()
                         if (selectFiles.isNotEmpty()) {
-                            fileTransferScreen.fileTransporter.startWriterHandleWhenFinish(
-                                newRequestFilesShareWriterHandle(selectFiles.map { it.toFile() })
-                            )
+                            val fileConnection = fileTransferScreen.getFileExploreConnection().await()
+                            fileConnection.sendFileExploreContentToRemote(RequestFilesModel(selectFiles.map { it.toFile() }.map { FileMd5(md5 = Paths.get(FileConstants.USER_HOME, it.path).getFilePathMd5(), it) }))
                             updateState { oldState ->
                                 oldState.copy(selectedFiles = emptySet())
                             }.await()

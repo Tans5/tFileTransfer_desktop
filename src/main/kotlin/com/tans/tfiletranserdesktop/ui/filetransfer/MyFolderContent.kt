@@ -20,11 +20,13 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tans.tfiletranserdesktop.file.*
+import com.tans.tfiletranserdesktop.net.model.FileMd5
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
 import com.tans.tfiletranserdesktop.ui.resources.colorTextBlack
 import com.tans.tfiletranserdesktop.ui.resources.colorTextGray
+import com.tans.tfiletranserdesktop.utils.getFilePathMd5
 import com.tans.tfiletranserdesktop.utils.getSizeString
 import io.reactivex.Single
 import kotlinx.coroutines.launch
@@ -238,7 +240,7 @@ class MyFolderContent(val fileTransferScreen: FileTransferScreen) : BaseScreen<M
                     launch {
                         val selectFiles = bindState().map { it.selectedFiles }.firstOrError().await()
                         if (selectFiles.isNotEmpty()) {
-                            fileTransferScreen.sendingFiles(selectFiles.map { it.toFile() })
+                            fileTransferScreen.sendingFiles(selectFiles.map { it.toFile() }.map { FileMd5(md5 = Paths.get(FileConstants.USER_HOME, it.path).getFilePathMd5(), it) })
                         }
                         updateState { oldState ->
                             oldState.copy(selectedFiles = emptySet())
