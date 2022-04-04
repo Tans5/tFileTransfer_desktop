@@ -230,11 +230,7 @@ class FileTransferScreen(
                                             )
                                             oldState.copy(showDialog = d)
                                         }.await()
-                                        try {
-                                            task.await()
-                                        } catch (t: Throwable) {
-                                            break
-                                        }
+                                        task.await()
                                     }
                                 }
                                 if (result.isFailure) { result.exceptionOrNull()?.printStackTrace() }
@@ -272,7 +268,8 @@ class FileTransferScreen(
                     val task: Deferred<Unit> = async {
                         sendFileObservable(
                             fileMd5 = file,
-                            localAddress = localAddress)
+                            localAddress = localAddress
+                        )
                             .flatMapSingle { hasSend ->
                                 this@FileTransferScreen.updateState { oldState ->
                                     val dialogType = oldState.showDialog
@@ -299,11 +296,7 @@ class FileTransferScreen(
                         )
                         oldState.copy(showDialog = d)
                     }.await()
-                    try {
-                        task.await()
-                    } catch (t: Throwable) {
-                        break
-                    }
+                    task.await()
                 }
             }
             if (result.isFailure) {
@@ -499,7 +492,8 @@ class FileTransferScreen(
                         TextButton(
                             modifier = Modifier.align(BiasAlignment.Horizontal(1f)),
                             onClick = {
-                                launch {
+                                launch(Dispatchers.IO) {
+                                    updateState { it.copy(showDialog = FileTransferDialog.None) }.await()
                                     val dialogType = bindState().map { it.showDialog }.firstOrError().await()
                                     if (dialogType is FileTransferDialog.SendingFiles) {
                                         dialogType.task.cancel()
