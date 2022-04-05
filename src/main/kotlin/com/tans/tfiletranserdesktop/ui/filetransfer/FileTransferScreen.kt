@@ -224,9 +224,7 @@ class FileTransferScreen(
                                                     .onErrorResumeNext { e ->
                                                         e.printStackTrace()
                                                         isError.set(true)
-                                                        this@FileTransferScreen
-                                                            .updateState { s -> s.copy(showDialog = FileTransferDialog.None) }
-                                                            .map { }
+                                                        Single.just(Unit)
                                                     }
                                                     .await()
                                             }
@@ -305,9 +303,7 @@ class FileTransferScreen(
                             .onErrorResumeNext {
                                 isError.set(true)
                                 it.printStackTrace()
-                                this@FileTransferScreen.updateState { oldState ->
-                                    oldState.copy(showDialog = FileTransferDialog.None)
-                                }.map {  }
+                                Single.just(Unit)
                             }
                             .await()
                     }
@@ -523,8 +519,8 @@ class FileTransferScreen(
                             modifier = Modifier.align(BiasAlignment.Horizontal(1f)),
                             onClick = {
                                 launch(Dispatchers.IO) {
-                                    updateState { it.copy(showDialog = FileTransferDialog.None) }.await()
                                     val dialogType = bindState().map { it.showDialog }.firstOrError().await()
+                                    updateState { it.copy(showDialog = FileTransferDialog.None) }.await()
                                     if (dialogType is FileTransferDialog.SendingFiles) {
                                         dialogType.task.cancel()
                                     }

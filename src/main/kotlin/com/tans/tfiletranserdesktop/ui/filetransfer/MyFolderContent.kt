@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tans.tfiletranserdesktop.file.*
 import com.tans.tfiletranserdesktop.net.model.FileMd5
+import com.tans.tfiletranserdesktop.net.model.ShareFilesModel
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
@@ -240,8 +241,11 @@ class MyFolderContent(val fileTransferScreen: FileTransferScreen) : BaseScreen<M
                 FloatingActionButton(onClick = {
                     launch {
                         val selectFiles = bindState().map { it.selectedFiles }.firstOrError().await()
+                        val files = selectFiles.map { it.toFile() }.map { FileMd5(md5 = Paths.get(FileConstants.USER_HOME, it.path).getFilePathMd5(), it) }
                         if (selectFiles.isNotEmpty()) {
-                            fileTransferScreen.sendingFiles(selectFiles.map { it.toFile() }.map { FileMd5(md5 = Paths.get(FileConstants.USER_HOME, it.path).getFilePathMd5(), it) })
+                            val connection = fileTransferScreen.getFileExploreConnection().await()
+                            connection.sendFileExploreContentToRemote(ShareFilesModel(files))
+                            fileTransferScreen.sendingFiles(files)
                         }
                         updateState { oldState ->
                             oldState.copy(selectedFiles = emptySet())
