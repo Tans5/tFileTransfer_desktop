@@ -39,12 +39,13 @@ fun Path.newChildFile(name: String): Path {
     }
 }
 
-val fileSizeFormatter = DecimalFormat("0.##")
 fun getSizeString(size: Long): String = when (size) {
     in 0 until KB -> "$size B"
-    in KB until MB -> "${fileSizeFormatter.format(size.toDouble() / KB)} KB"
-    in MB until GB -> "${fileSizeFormatter.format(size.toDouble() / MB)} MB"
-    in GB until Long.MAX_VALUE -> "${fileSizeFormatter.format(size.toDouble() / GB)} GB"
+    in KB until MB -> {
+        String.format("%.2f KB", size.toDouble() / KB.toDouble())
+    }
+    in MB until GB -> String.format("%.2f MB", size.toDouble() / MB.toDouble())
+    in GB until Long.MAX_VALUE -> String.format("%.2f GB", size.toDouble() / GB.toDouble())
     else -> ""
 }
 
