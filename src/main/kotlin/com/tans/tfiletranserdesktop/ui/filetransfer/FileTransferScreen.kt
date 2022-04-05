@@ -45,6 +45,8 @@ import java.nio.file.Paths
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneId
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.streams.toList
 
 enum class FileTransferTab(val tabTag: String) {
@@ -107,146 +109,163 @@ class FileTransferScreen(
             val fileConnection = if (asServer) {
                 startFileExploreServer(localAddress)
             } else {
+                delay(300)
                 connectToFileExploreServer(remoteAddress)
             }
-            val handshakeModel = fileConnection.observeConnected().await()
+            try {
+                val handshakeModel = fileConnection.observeConnected().timeout(12 * 1000, TimeUnit.MILLISECONDS).await()
 
-            updateState { oldState ->
-                oldState.copy(connectStatus = ConnectStatus.Connected(handshakeModel, fileConnection))
-            }.await()
+                updateState { oldState ->
+                    oldState.copy(connectStatus = ConnectStatus.Connected(handshakeModel, fileConnection))
+                }.await()
 
-            fileConnection.observeRemoteFileExploreContent()
-                .doOnNext {
-                    when (it) {
+                fileConnection.observeRemoteFileExploreContent()
+                    .doOnNext {
+                        when (it) {
 
-                        is RequestFolderModel -> {
-                            val parentPath = it.requestPath
-                            val path = Paths.get(FileConstants.USER_HOME + parentPath)
-                            val children = if (Files.isReadable(path)) {
-                                Files.list(path)
-                                    .filter { f -> Files.isReadable(f) }
-                                    .map { p ->
-                                        val name = p.fileName.toString()
-                                        val lastModify = OffsetDateTime.ofInstant(
-                                            Instant.ofEpochMilli(
-                                                Files.getLastModifiedTime(p).toMillis()
-                                            ), ZoneId.systemDefault()
-                                        )
-                                        val pathString = if (parentPath.endsWith(FileConstants.FILE_SEPARATOR)) {
-                                            parentPath + name
-                                        } else {
-                                            parentPath + FileConstants.FILE_SEPARATOR + name
-                                        }
-                                        if (Files.isDirectory(p)) {
-                                            Folder(
-                                                name = name,
-                                                path = pathString,
-                                                childCount = p.let {
-                                                    val s = Files.list(it)
-                                                    val size = s.count()
-                                                    s.close()
-                                                    size
-                                                },
-                                                lastModify = lastModify
+                            is RequestFolderModel -> {
+                                val parentPath = it.requestPath
+                                val path = Paths.get(FileConstants.USER_HOME + parentPath)
+                                val children = if (Files.isReadable(path)) {
+                                    Files.list(path)
+                                        .filter { f -> Files.isReadable(f) }
+                                        .map { p ->
+                                            val name = p.fileName.toString()
+                                            val lastModify = OffsetDateTime.ofInstant(
+                                                Instant.ofEpochMilli(
+                                                    Files.getLastModifiedTime(p).toMillis()
+                                                ), ZoneId.systemDefault()
                                             )
-                                        } else {
-                                            File(
-                                                name = name,
-                                                path = pathString,
-                                                size = Files.size(p),
-                                                lastModify = lastModify
-                                            )
-                                        }
-                                    }.toArray().toList()
+                                            val pathString = if (parentPath.endsWith(FileConstants.FILE_SEPARATOR)) {
+                                                parentPath + name
+                                            } else {
+                                                parentPath + FileConstants.FILE_SEPARATOR + name
+                                            }
+                                            if (Files.isDirectory(p)) {
+                                                Folder(
+                                                    name = name,
+                                                    path = pathString,
+                                                    childCount = p.let {
+                                                        val s = Files.list(it)
+                                                        val size = s.count()
+                                                        s.close()
+                                                        size
+                                                    },
+                                                    lastModify = lastModify
+                                                )
+                                            } else {
+                                                File(
+                                                    name = name,
+                                                    path = pathString,
+                                                    size = Files.size(p),
+                                                    lastModify = lastModify
+                                                )
+                                            }
+                                        }.toArray().toList()
 
-                            } else {
-                                emptyList()
+                                } else {
+                                    emptyList()
+                                }
+                                fileConnection.sendFileExploreContentToRemote(
+                                    fileExploreContent = ShareFolderModel(
+                                        path = parentPath,
+                                        childrenFolders = children.filterIsInstance<Folder>(),
+                                        childrenFiles = children.filterIsInstance<File>()
+                                    )
+                                )
                             }
-                            fileConnection.sendFileExploreContentToRemote(
-                                fileExploreContent = ShareFolderModel(
-                                    path = parentPath,
-                                    childrenFolders = children.filterIsInstance<Folder>(),
-                                    childrenFiles = children.filterIsInstance<File>()
+
+                            is ShareFolderModel -> {
+                                remoteFolderModelEvent.onNext(
+                                    ResponseFolderModel(
+                                        path = it.path,
+                                        childrenFolders = it.childrenFolders,
+                                        childrenFiles = it.childrenFiles
+                                    )
                                 )
-                            )
-                        }
+                            }
 
-                        is ShareFolderModel -> {
-                            remoteFolderModelEvent.onNext(
-                                ResponseFolderModel(
-                                    path = it.path,
-                                    childrenFolders = it.childrenFolders,
-                                    childrenFiles = it.childrenFiles
+                            is RequestFilesModel -> {
+                                fileConnection.sendFileExploreContentToRemote(
+                                    fileExploreContent = ShareFilesModel(shareFiles = it.requestFiles),
+                                    waitReplay = true
                                 )
-                            )
-                        }
+                                sendingFiles(it.requestFiles)
+                            }
 
-                        is RequestFilesModel -> {
-                            fileConnection.sendFileExploreContentToRemote(
-                                fileExploreContent = ShareFilesModel(shareFiles = it.requestFiles),
-                                waitReplay = true
-                            )
-                            sendingFiles(it.requestFiles)
-                        }
+                            is ShareFilesModel -> {
 
-                        is ShareFilesModel -> {
+                                launch(Dispatchers.IO) {
+                                    val files = it.shareFiles
+                                    try {
+                                        val isError = AtomicBoolean(false)
+                                        for ((i, f) in files.withIndex()) {
 
-                            launch(Dispatchers.IO) {
-                                val files = it.shareFiles
-                                val result = runCatching {
-                                    for ((i, f) in files.withIndex()) {
+                                            delay(300)
 
-                                        delay(300)
-
-                                        val task = async {
-                                            downloadFileObservable(
-                                                fileMd5 = f,
-                                                serverAddress = remoteAddress,
-                                                saveFile = downloadDir.newChildFile(f.file.name)
-                                            )
-                                                .flatMapSingle { hasDownload ->
-                                                    this@FileTransferScreen.updateState { oldState ->
-                                                        val dialogType = oldState.showDialog
-                                                        if (dialogType is FileTransferDialog.DownloadFiles) {
-                                                            oldState.copy(showDialog = dialogType.copy(downloadedSize = hasDownload))
-                                                        } else {
-                                                            oldState
+                                            val task = async {
+                                                downloadFileObservable(
+                                                    fileMd5 = f,
+                                                    serverAddress = remoteAddress,
+                                                    saveFile = downloadDir.newChildFile(f.file.name)
+                                                )
+                                                    .flatMapSingle { hasDownload ->
+                                                        this@FileTransferScreen.updateState { oldState ->
+                                                            val dialogType = oldState.showDialog
+                                                            if (dialogType is FileTransferDialog.DownloadFiles) {
+                                                                oldState.copy(showDialog = dialogType.copy(downloadedSize = hasDownload))
+                                                            } else {
+                                                                oldState
+                                                            }
                                                         }
                                                     }
-                                                }
-                                                .ignoreElements()
-                                                .toSingleDefault(Unit)
-                                                .await()
-                                        }
+                                                    .ignoreElements()
+                                                    .toSingleDefault(Unit)
+                                                    .onErrorResumeNext { e ->
+                                                        e.printStackTrace()
+                                                        isError.set(true)
+                                                        this@FileTransferScreen
+                                                            .updateState { s -> s.copy(showDialog = FileTransferDialog.None) }
+                                                            .map { }
+                                                    }
+                                                    .await()
+                                            }
 
-                                        this@FileTransferScreen.updateState { oldState ->
-                                            val d = FileTransferDialog.DownloadFiles(
-                                                fileCount = files.size,
-                                                index = i,
-                                                fileSize = f.file.size,
-                                                fileName = f.file.name,
-                                                downloadedSize = 0L,
-                                                task = task
-                                            )
-                                            oldState.copy(showDialog = d)
-                                        }.await()
-                                        task.await()
+                                            this@FileTransferScreen.updateState { oldState ->
+                                                val d = FileTransferDialog.DownloadFiles(
+                                                    fileCount = files.size,
+                                                    index = i,
+                                                    fileSize = f.file.size,
+                                                    fileName = f.file.name,
+                                                    downloadedSize = 0L,
+                                                    task = task
+                                                )
+                                                oldState.copy(showDialog = d)
+                                            }.await()
+                                            task.await()
+                                            if (isError.get()) {
+                                                break
+                                            }
+                                        }
+                                    } catch (t: Throwable) {
+                                        t.printStackTrace()
+                                    } finally {
+                                        this@FileTransferScreen.updateState { s -> s.copy(showDialog = FileTransferDialog.None) }.await()
                                     }
                                 }
-                                if (result.isFailure) { result.exceptionOrNull()?.printStackTrace() }
-                                this@FileTransferScreen.updateState { s -> s.copy(showDialog = FileTransferDialog.None) }.await()
                             }
-                        }
 
-                        is MessageModel -> {
-                            remoteMessageEvent.onNext(it.message)
+                            is MessageModel -> {
+                                remoteMessageEvent.onNext(it.message)
+                            }
+                            else -> {}
                         }
-                        else -> {}
                     }
-                }
-                .ignoreElements()
-                .await()
-
+                    .ignoreElements()
+                    .await()
+            } catch (e: Throwable) {
+                e.printStackTrace()
+            }
             updateState { oldState ->
                 oldState.copy(connectStatus = ConnectStatus.Error)
             }.await()
@@ -263,6 +282,7 @@ class FileTransferScreen(
     fun sendingFiles(files: List<FileMd5>) {
         launch(Dispatchers.IO) {
             val result = runCatching {
+                val isError = AtomicBoolean(false)
                 for ((i, file) in files.withIndex()) {
 
                     val task: Deferred<Unit> = async {
@@ -282,6 +302,13 @@ class FileTransferScreen(
                             }
                             .ignoreElements()
                             .toSingleDefault(Unit)
+                            .onErrorResumeNext {
+                                isError.set(true)
+                                it.printStackTrace()
+                                this@FileTransferScreen.updateState { oldState ->
+                                    oldState.copy(showDialog = FileTransferDialog.None)
+                                }.map {  }
+                            }
                             .await()
                     }
 
@@ -297,6 +324,9 @@ class FileTransferScreen(
                         oldState.copy(showDialog = d)
                     }.await()
                     task.await()
+                    if (isError.get()) {
+                        break
+                    }
                 }
             }
             if (result.isFailure) {
