@@ -175,14 +175,13 @@ class BroadcastScreen : BaseScreen<BroadcastState>(BroadcastState()) {
                             localAddress = selectAddress,
                             localDeviceInfo = state.localDeviceInfo,
                             connectTo = { remoteDevice ->
-                                // TODO: Transfer file
-//                                screenRoute.routeTo(
-//                                    FileTransferScreen(
-//                                        localAddress = selectAddress,
-//                                        remoteDevice = remoteDevice,
-//                                        asServer = false
-//                                    )
-//                                )
+                                screenRoute.routeTo(
+                                    FileTransferScreen(
+                                        localAddress = selectAddress,
+                                        remoteDevice = remoteDevice,
+                                        asServer = false
+                                    )
+                                )
                             }) {
                             launch {
                                 updateState { oldState -> oldState.copy(dialogEvent = BroadcastDialogEvent.None(System.currentTimeMillis())) }.await()
@@ -193,14 +192,13 @@ class BroadcastScreen : BaseScreen<BroadcastState>(BroadcastState()) {
                             localAddress = selectAddress,
                             broadMessage = state.localDeviceInfo,
                             receiveConnect = { remoteDevice ->
-                                // TODO: Transfer file.
-//                                screenRoute.routeTo(
-//                                    FileTransferScreen(
-//                                        localAddress = selectAddress,
-//                                        remoteDevice = remoteDevice,
-//                                        asServer = true
-//                                    )
-//                                )
+                                screenRoute.routeTo(
+                                    FileTransferScreen(
+                                        localAddress = selectAddress,
+                                        remoteDevice = remoteDevice,
+                                        asServer = true
+                                    )
+                                )
                             }) {
                             launch {
                                 updateState { oldState -> oldState.copy(dialogEvent = BroadcastDialogEvent.None(System.currentTimeMillis())) }.await()

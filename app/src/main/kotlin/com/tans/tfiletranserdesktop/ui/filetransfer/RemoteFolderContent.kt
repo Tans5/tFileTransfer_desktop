@@ -11,103 +11,51 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.tans.tfiletranserdesktop.file.*
-import com.tans.tfiletranserdesktop.net.model.FileMd5
-import com.tans.tfiletranserdesktop.net.model.RequestFilesModel
-import com.tans.tfiletranserdesktop.net.model.RequestFolderModel
+import com.tans.tfiletranserdesktop.logs.JvmLog
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
-import com.tans.tfiletranserdesktop.ui.dialogs.LoadingDialog
-import com.tans.tfiletranserdesktop.utils.getFilePathMd5
-import io.reactivex.Single
+import com.tans.tfiletransporter.transferproto.fileexplore.requestDownloadFilesSuspend
+import com.tans.tfiletransporter.transferproto.fileexplore.requestScanDirSuspend
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx2.await
-import kotlinx.coroutines.rx2.rxSingle
-import java.nio.file.Paths
+import java.util.Optional
+import kotlin.jvm.optionals.getOrNull
 
 data class RemoteFolderContentState(
-    val fileTree: FileTree = newRootFileTree(),
-    val selectedFiles: Set<CommonFileLeaf> = emptySet(),
-    val sortType: FileSortType = FileSortType.SortByName,
-    val loadingDir: Boolean = false
+    val fileTree: Optional<FileTree> = Optional.empty(),
+    val selectedFiles: Set<FileLeaf.CommonFileLeaf> = emptySet(),
+    val sortType: FileSortType = FileSortType.SortByName
 )
 
-class RemoteFolderContent(val fileTransferScreen: FileTransferScreen)
-    : BaseScreen<RemoteFolderContentState>(defaultState = RemoteFolderContentState()) {
+class RemoteFolderContent(val fileTransferScreen: FileTransferScreen) :
+    BaseScreen<RemoteFolderContentState>(defaultState = RemoteFolderContentState()) {
 
     override fun initData() {
-        launch {
-            val handshakeModel = fileTransferScreen.getFileExploreHandshakeModel().await()
-            val fileConnection = fileTransferScreen.getFileExploreConnection().await()
-            updateState { it.copy(fileTree = newRootFileTree(path = handshakeModel.pathSeparator)) }.await()
-            bindState()
-                .map { it.fileTree }
-                .distinctUntilChanged()
-                .flatMapSingle { oldTree ->
-                    if (!oldTree.notNeedRefresh) {
-                        rxSingle {
-                            updateState { it.copy(loadingDir = true) }.await()
-                            fileConnection.sendFileExploreContentToRemote(RequestFolderModel(oldTree.path))
-                            fileTransferScreen.remoteFolderModelEvent.firstOrError()
-                                .flatMap { remoteFolder ->
-                                    if (remoteFolder.path == oldTree.path) {
-                                        updateState { oldState ->
-                                            val children: List<YoungLeaf> = remoteFolder.childrenFolders
-                                                .map {
-                                                    DirectoryYoungLeaf(
-                                                        name = it.name,
-                                                        childrenCount = it.childCount,
-                                                        lastModified = it.lastModify.toInstant()
-                                                            .toEpochMilli()
-                                                    )
-                                                } + remoteFolder.childrenFiles
-                                                .map {
-                                                    FileYoungLeaf(
-                                                        name = it.name,
-                                                        size = it.size,
-                                                        lastModified = it.lastModify.toInstant()
-                                                            .toEpochMilli()
-                                                    )
-                                                }
-                                            oldState.copy(
-                                                fileTree = children.refreshFileTree(
-                                                    parentTree = oldTree,
-                                                    dirSeparator = handshakeModel.pathSeparator
-                                                ), selectedFiles = emptySet()
-                                            )
-                                        }.map {
-
-                                        }.onErrorResumeNext {
-                                            it.printStackTrace()
-                                            Single.just(Unit)
-                                        }
-                                    } else {
-                                        Single.just(Unit)
-                                    }
-                                }.await()
-                            updateState { it.copy(loadingDir = false) }.await()
-                        }
-                    } else {
-                        Single.just(Unit)
-                    }
-                }.ignoreElements().await()
+        launch(Dispatchers.IO) {
+            loadRemoteRootDir()
         }
     }
 
     @Composable
     override fun start(screenRoute: ScreenRoute) {
         Box(modifier = Modifier.fillMaxSize()) {
-            val state = bindState().map { Triple(it.fileTree, it.selectedFiles, it.sortType) }.distinctUntilChanged().subscribeAsState(Triple(newRootFileTree(), emptySet(), FileSortType.SortByName))
-            state.value.apply {
+            val state = bindState().map { Triple(it.fileTree, it.selectedFiles, it.sortType) }.distinctUntilChanged()
+                .subscribeAsState(Triple(Optional.empty(), emptySet(), FileSortType.SortByName))
+            val fileTree = state.value.first.getOrNull()
+            val selectedFiles = state.value.second
+            val sortType = state.value.third
+            if (fileTree != null) {
                 FileList(
-                    fileTree = first,
-                    selectedFiles = second,
-                    sortType = third
+                    fileTree = fileTree,
+                    selectedFiles = selectedFiles,
+                    sortType = sortType
                 ) { fileOrDir: FileLeaf ->
-                    launch {
-                        updateState { oldState ->
-                            when (fileOrDir) {
-                                is CommonFileLeaf -> {
+                    launch(Dispatchers.IO) {
+                        when (fileOrDir) {
+                            is FileLeaf.CommonFileLeaf -> {
+                                updateState { oldState ->
                                     val oldSelectedFiles = oldState.selectedFiles
                                     val newSelectedFiles = if (oldSelectedFiles.contains(fileOrDir)) {
                                         oldSelectedFiles - fileOrDir
@@ -115,60 +63,114 @@ class RemoteFolderContent(val fileTransferScreen: FileTransferScreen)
                                         oldSelectedFiles + fileOrDir
                                     }
                                     oldState.copy(selectedFiles = newSelectedFiles)
-                                }
-
-                                is DirectoryFileLeaf -> {
-                                    oldState.copy(fileTree = fileOrDir.newSubTree(oldState.fileTree), selectedFiles = emptySet())
+                                }.await()
+                            }
+                            is FileLeaf.DirectoryFileLeaf -> {
+                                runCatching {
+                                    fileTransferScreen.fileExplore
+                                        .requestScanDirSuspend(fileOrDir.path)
+                                }.onSuccess {
+                                    updateState { s ->
+                                        s.copy(fileTree = Optional.of(fileTree.newRemoteSubTree(it)), selectedFiles = emptySet())
+                                    }.await()
+                                }.onFailure {
+                                    JvmLog.e(TAG, "Scan remote dir error: ${it.message}", it)
                                 }
                             }
-                        }.await()
+                        }
                     }
                 }
             }
 
             Box(modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp)) {
                 FloatingActionButton(onClick = {
-                    launch {
-                        val selectFiles = bindState().map { it.selectedFiles }.firstOrError().await()
-                        if (selectFiles.isNotEmpty()) {
-                            val fileConnection = fileTransferScreen.getFileExploreConnection().await()
-                            fileConnection.sendFileExploreContentToRemote(RequestFilesModel(selectFiles.map { it.toFile() }.map { FileMd5(md5 = Paths.get(FileConstants.USER_HOME, it.path).getFilePathMd5(), it) }))
-                            updateState { oldState ->
-                                oldState.copy(selectedFiles = emptySet())
-                            }.await()
+                    launch(Dispatchers.IO) {
+                        val selectFiles = bindState().map { it.selectedFiles }.firstOrError().await().filter { it.size > 0 }
+                        val exploreFiles = selectFiles.toExploreFiles()
+                        if (exploreFiles.isNotEmpty()) {
+                            runCatching {
+                                fileTransferScreen.fileExplore.requestDownloadFilesSuspend(
+                                    downloadFiles = exploreFiles
+                                )
+                            }.onSuccess {
+                                fileTransferScreen.downloadFiles(exploreFiles, it.maxConnection)
+                                updateState { oldState ->
+                                    oldState.copy(selectedFiles = emptySet())
+                                }.await()
+                            }.onFailure {
+                                JvmLog.e(TAG, "Request download file error: ${it.message}", it)
+                            }
                         }
                     }
                 }) {
                     Image(painter = painterResource("images/download_outline.xml"), contentDescription = null)
                 }
             }
-
-            val showLoading = bindState().map { it.loadingDir }.distinctUntilChanged().subscribeAsState(false)
-            if (showLoading.value) {
-                LoadingDialog()
-            }
         }
     }
 
     fun back(): Boolean {
-        return if (bindState().firstOrError().blockingGet().fileTree.isRootFileTree()) {
+        return if (bindState().firstOrError().blockingGet().fileTree.getOrNull()?.isRootFileTree() == false) {
             false
         } else {
-            updateState { state ->
-                if (state.fileTree.parentTree == null) state else RemoteFolderContentState(
-                    fileTree = state.fileTree.parentTree, selectedFiles = emptySet())
-            }.subscribe()
+            launch {
+                updateState { state ->
+                    val pt = state.fileTree.getOrNull()?.parentTree
+                    if (pt != null) {
+                        state.copy(fileTree = Optional.of(pt), selectedFiles = emptySet())
+                    } else {
+                        state
+                    }
+                }.await()
+            }
             true
         }
     }
 
     fun refresh() {
-        launch {
-            updateState { oldState ->
-                val newTree = oldState.fileTree.copy(notNeedRefresh = false)
-                oldState.copy(fileTree = newTree, selectedFiles = emptySet())
-            }.await()
+        launch(Dispatchers.IO) {
+            val fileTree = bindState().firstOrError().map { it.fileTree }.await().getOrNull()
+            if (fileTree == null || fileTree.isRootFileTree()) {
+                loadRemoteRootDir()
+            } else {
+                val parentTree = fileTree.parentTree!!
+                runCatching {
+                    fileTransferScreen.fileExplore
+                        .requestScanDirSuspend(parentTree.path)
+                }.onSuccess {
+                    updateState { s ->
+                        s.copy(fileTree = Optional.of(parentTree.newRemoteSubTree(it)), selectedFiles = emptySet())
+                    }.await()
+                }.onFailure {
+                    JvmLog.e(TAG, "Scan remote dir error: ${it.message}", it)
+                }
+            }
         }
+    }
+
+    private suspend fun loadRemoteRootDir() {
+        val connectStatus = fileTransferScreen.bindState()
+            .map { it.connectStatus }
+            .firstOrError()
+            .await()
+        if (connectStatus is ConnectStatus.Connected) {
+            runCatching {
+                fileTransferScreen.fileExplore.requestScanDirSuspend(connectStatus.handshake.remoteFileSeparator)
+            }.onSuccess {
+                JvmLog.d(TAG, "Request scan root dir success")
+                updateState { s ->
+                    s.copy(fileTree = Optional.of(createRemoteRootTree(it)), selectedFiles = emptySet())
+                }.await()
+            }.onFailure {
+                JvmLog.e(TAG, "Request scan root dir fail: $it", it)
+            }
+        } else {
+            JvmLog.e(TAG, "Wrong connect status: $connectStatus")
+        }
+    }
+
+    companion object {
+        private const val TAG = "RemoteFolderContent"
     }
 
 }

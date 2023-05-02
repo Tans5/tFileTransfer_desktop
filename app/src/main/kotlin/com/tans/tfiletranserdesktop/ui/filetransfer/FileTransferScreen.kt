@@ -16,7 +16,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tans.tfiletranserdesktop.file.*
 import com.tans.tfiletranserdesktop.logs.JvmLog
-import com.tans.tfiletranserdesktop.net.model.*
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
@@ -27,8 +26,6 @@ import com.tans.tfiletransporter.transferproto.fileexplore.*
 import com.tans.tfiletransporter.transferproto.fileexplore.model.*
 import com.tans.tfiletransporter.transferproto.filetransfer.*
 import com.tans.tfiletransporter.transferproto.filetransfer.model.SenderFile
-import io.reactivex.subjects.PublishSubject
-import io.reactivex.subjects.Subject
 import kotlinx.coroutines.*
 import kotlinx.coroutines.rx2.await
 import java.io.File
@@ -164,9 +161,6 @@ class FileTransferScreen(
     private val ioExecutor: Executor by lazy {
         Dispatchers.IO.asExecutor()
     }
-
-    val remoteMessageEvent: Subject<String> = PublishSubject.create<String>().toSerialized()
-    val remoteFolderModelEvent: Subject<ResponseFolderModel> = PublishSubject.create<ResponseFolderModel>().toSerialized()
 
     override fun initData() {
         launch(Dispatchers.IO) {
