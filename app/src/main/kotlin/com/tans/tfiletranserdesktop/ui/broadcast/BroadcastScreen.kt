@@ -191,16 +191,16 @@ class BroadcastScreen : BaseScreen<BroadcastState>(BroadcastState()) {
 
                         is BroadcastDialogEvent.SenderDialog -> showBroadcastSenderDialog(
                             localAddress = selectAddress,
-                            noneBroadcast = false,
                             broadMessage = state.localDeviceInfo,
                             receiveConnect = { remoteDevice ->
-                                screenRoute.routeTo(
-                                    FileTransferScreen(
-                                        localAddress = selectAddress,
-                                        remoteDevice = remoteDevice,
-                                        asServer = true
-                                    )
-                                )
+                                // TODO: Transfer file.
+//                                screenRoute.routeTo(
+//                                    FileTransferScreen(
+//                                        localAddress = selectAddress,
+//                                        remoteDevice = remoteDevice,
+//                                        asServer = true
+//                                    )
+//                                )
                             }) {
                             launch {
                                 updateState { oldState -> oldState.copy(dialogEvent = BroadcastDialogEvent.None(System.currentTimeMillis())) }.await()

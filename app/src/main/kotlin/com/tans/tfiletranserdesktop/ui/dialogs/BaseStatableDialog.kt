@@ -59,7 +59,7 @@ abstract class BaseStatableDialog<State>(defaultState: State, val cancelRequest:
     @Composable
     abstract fun DialogContent()
 
-    fun stop() {
+    open fun stop() {
         cancel("Dialog Cancel.")
     }
 

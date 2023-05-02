@@ -17,6 +17,8 @@ import com.tans.tfiletranserdesktop.logs.JvmLog
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.dialogs.BaseStatableDialog
 import com.tans.tfiletranserdesktop.ui.resources.*
+import com.tans.tfiletranserdesktop.utils.DesktopOs
+import com.tans.tfiletranserdesktop.utils.currentUseOs
 import com.tans.tfiletransporter.netty.getBroadcastAddress
 import com.tans.tfiletransporter.transferproto.broadcastconn.*
 import com.tans.tfiletransporter.transferproto.broadcastconn.model.RemoteDevice
@@ -69,7 +71,7 @@ class BroadcastReceiverDialog(
             this@BroadcastReceiverDialog.receiver.set(receiver)
             runCatching {
                 withContext(Dispatchers.IO) {
-                    receiver.startReceiverSuspend(localAddress, localAddress.getBroadcastAddress().first)
+                    receiver.startReceiverSuspend(localAddress, if (currentUseOs == DesktopOs.Windows) localAddress else localAddress.getBroadcastAddress().first)
                 }
             }.onSuccess {
                 receiver.addObserver(object : BroadcastReceiverObserver {
@@ -180,6 +182,14 @@ class BroadcastReceiverDialog(
                     )
                 }
             }
+        }
+    }
+
+    override fun stop() {
+        super.stop()
+        this.receiver.get()?.let {
+            it.closeConnectionIfActive()
+            this.receiver.set(null)
         }
     }
 
