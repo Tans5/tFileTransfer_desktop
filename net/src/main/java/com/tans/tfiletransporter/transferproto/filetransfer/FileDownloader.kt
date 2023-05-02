@@ -30,10 +30,13 @@ import java.io.File
 import java.io.RandomAccessFile
 import java.net.InetAddress
 import java.net.InetSocketAddress
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.io.path.moveTo
 
 class FileDownloader(
     val downloadDir: File,
@@ -244,6 +247,7 @@ class FileDownloader(
                 }
                 closeFragmentsConnection()
                 try {
+                    recycleResource()
                     downloadingFile.get()?.let {
                         it.delete()
                         downloadingFile.set(null)
@@ -251,7 +255,6 @@ class FileDownloader(
                 } catch (e: Throwable) {
                     e.printStackTrace()
                 }
-                recycleResource()
             }
         }
 
@@ -273,12 +276,12 @@ class FileDownloader(
         private fun onFinished() {
             if (isSingleFileDownloaderExecuted.get() && !isSingleFileDownloaderCanceled.get() && isSingleFileFinished.compareAndSet(false, true)) {
                 try {
+                    recycleResource()
                     downloadingFile.get()?.let {
                         it.renameTo(getDownloadedFile(file.name))
                         downloadingFile.set(null)
                         log.d(TAG, "File: ${file.name} download success!!!")
                     }
-                    recycleResource()
                 } catch (e: Throwable) {
                     e.printStackTrace()
                 }
