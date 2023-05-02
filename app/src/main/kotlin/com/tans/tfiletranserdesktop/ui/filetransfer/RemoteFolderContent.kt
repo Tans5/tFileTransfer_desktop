@@ -137,7 +137,7 @@ class RemoteFolderContent(val fileTransferScreen: FileTransferScreen) :
                 val parentTree = fileTree.parentTree!!
                 runCatching {
                     fileTransferScreen.fileExplore
-                        .requestScanDirSuspend(parentTree.path)
+                        .requestScanDirSuspend(fileTree.path)
                 }.onSuccess {
                     updateState { s ->
                         s.copy(fileTree = Optional.of(parentTree.newRemoteSubTree(it)), selectedFiles = emptySet())

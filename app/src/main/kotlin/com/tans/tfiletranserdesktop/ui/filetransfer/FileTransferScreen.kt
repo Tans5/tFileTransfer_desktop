@@ -256,16 +256,14 @@ class FileTransferScreen(
             }.await()
             fun updateSenderDialog(updateDialog: (FileTransferDialog.SendingFiles) -> FileTransferDialog) {
                 ioExecutor.execute {
-                    launch {
-                        updateState { s->
-                            val dialog = s.showDialog
-                            if (dialog is FileTransferDialog.SendingFiles) {
-                                s.copy(showDialog = updateDialog(dialog))
-                            } else {
-                                s
-                            }
-                        }.await()
-                    }
+                    updateState { s->
+                        val dialog = s.showDialog
+                        if (dialog is FileTransferDialog.SendingFiles) {
+                            s.copy(showDialog = updateDialog(dialog))
+                        } else {
+                            s
+                        }
+                    }.blockingGet()
                 }
             }
             sender.addObserver(object : FileTransferObserver {
@@ -339,16 +337,14 @@ class FileTransferScreen(
             }.await()
             fun updateDownloaderDialog(updateDialog: (FileTransferDialog.DownloadFiles) -> FileTransferDialog) {
                 ioExecutor.execute {
-                    launch {
-                        updateState { s->
-                            val dialog = s.showDialog
-                            if (dialog is FileTransferDialog.DownloadFiles) {
-                                s.copy(showDialog = updateDialog(dialog))
-                            } else {
-                                s
-                            }
-                        }.await()
-                    }
+                    updateState { s->
+                        val dialog = s.showDialog
+                        if (dialog is FileTransferDialog.DownloadFiles) {
+                            s.copy(showDialog = updateDialog(dialog))
+                        } else {
+                            s
+                        }
+                    }.blockingGet()
                 }
             }
 
