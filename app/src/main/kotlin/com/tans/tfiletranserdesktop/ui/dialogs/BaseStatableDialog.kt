@@ -18,6 +18,7 @@ import kotlinx.coroutines.cancel
 
 
 
+@Suppress("FunctionName")
 abstract class BaseStatableDialog<State>(defaultState: State, val cancelRequest: () -> Unit = {  }) :
     Stateable<State> by Stateable(defaultState),
     CoroutineScope by CoroutineScope(Dispatchers.IO) {

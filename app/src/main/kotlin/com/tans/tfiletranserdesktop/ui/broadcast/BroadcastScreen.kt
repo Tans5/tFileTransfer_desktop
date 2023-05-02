@@ -17,8 +17,7 @@ import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
 import com.tans.tfiletranserdesktop.ui.filetransfer.FileTransferScreen
 import com.tans.tfiletranserdesktop.ui.resources.*
-import com.tans.tfiletranserdesktop.utils.findLocalAddressV4
-import com.tans.tfiletranserdesktop.utils.getCurrentOs
+import com.tans.tfiletransporter.netty.findLocalAddressV4
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx2.await
 import java.net.InetAddress
@@ -34,7 +33,6 @@ data class BroadcastState(
     val addresses: List<InetAddress> = emptyList(),
     val selectAddressIndex: Optional<Int> = Optional.empty<Int>(),
     val localDeviceInfo: String = "",
-    val useSystemBroadcast: Boolean = true,
     val dialogEvent: BroadcastDialogEvent = BroadcastDialogEvent.None(System.currentTimeMillis())
 )
 
@@ -104,23 +102,23 @@ class BroadcastScreen : BaseScreen<BroadcastState>(BroadcastState()) {
                             }
                         }
 
-                        Row {
-                            Text(text = stringBroadcastUseSystemBroadcast, style = TextStyle(color = colorTextGray, fontSize = 14.sp, fontWeight = FontWeight.Bold),
-                                modifier = Modifier.align(Alignment.CenterVertically))
-                            Spacer(Modifier.width(5.dp))
-                            val useSystemBroadcast = bindState().map { it.useSystemBroadcast }.distinctUntilChanged().subscribeAsState(false)
-                            Switch(
-                                checked = useSystemBroadcast.value,
-                                onCheckedChange = {
-                                    launch {
-                                        updateState { oldState ->
-                                            oldState.copy(useSystemBroadcast = !useSystemBroadcast.value)
-                                        }.await()
-                                    }
-                                },
-                                colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colors.primary),
-                            )
-                        }
+//                        Row {
+//                            Text(text = stringBroadcastUseSystemBroadcast, style = TextStyle(color = colorTextGray, fontSize = 14.sp, fontWeight = FontWeight.Bold),
+//                                modifier = Modifier.align(Alignment.CenterVertically))
+//                            Spacer(Modifier.width(5.dp))
+//                            val useSystemBroadcast = bindState().map { it.useSystemBroadcast }.distinctUntilChanged().subscribeAsState(false)
+//                            Switch(
+//                                checked = useSystemBroadcast.value,
+//                                onCheckedChange = {
+//                                    launch {
+//                                        updateState { oldState ->
+//                                            oldState.copy(useSystemBroadcast = !useSystemBroadcast.value)
+//                                        }.await()
+//                                    }
+//                                },
+//                                colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colors.primary),
+//                            )
+//                        }
 
                         Spacer(modifier = Modifier.height(20.dp))
 
@@ -172,20 +170,19 @@ class BroadcastScreen : BaseScreen<BroadcastState>(BroadcastState()) {
                 if (dialogEvent.value.isPresent) {
                     val state = dialogEvent.value.get()
                     val selectAddress = state.addresses[state.selectAddressIndex.get()]
-                    val noneBroadcast = !state.useSystemBroadcast
                     when (state.dialogEvent) {
                         is BroadcastDialogEvent.ReceiverDialog -> showBroadcastReceiverDialog(
                             localAddress = selectAddress,
-                            noneBroadcast = noneBroadcast,
                             localDeviceInfo = state.localDeviceInfo,
                             connectTo = { remoteDevice ->
-                                screenRoute.routeTo(
-                                    FileTransferScreen(
-                                        localAddress = selectAddress,
-                                        remoteDevice = remoteDevice,
-                                        asServer = false
-                                    )
-                                )
+                                // TODO: Transfer file
+//                                screenRoute.routeTo(
+//                                    FileTransferScreen(
+//                                        localAddress = selectAddress,
+//                                        remoteDevice = remoteDevice,
+//                                        asServer = false
+//                                    )
+//                                )
                             }) {
                             launch {
                                 updateState { oldState -> oldState.copy(dialogEvent = BroadcastDialogEvent.None(System.currentTimeMillis())) }.await()
@@ -194,7 +191,7 @@ class BroadcastScreen : BaseScreen<BroadcastState>(BroadcastState()) {
 
                         is BroadcastDialogEvent.SenderDialog -> showBroadcastSenderDialog(
                             localAddress = selectAddress,
-                            noneBroadcast = noneBroadcast,
+                            noneBroadcast = false,
                             broadMessage = state.localDeviceInfo,
                             receiveConnect = { remoteDevice ->
                                 screenRoute.routeTo(

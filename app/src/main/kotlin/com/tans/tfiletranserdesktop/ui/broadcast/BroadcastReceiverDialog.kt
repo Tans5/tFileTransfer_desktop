@@ -13,31 +13,29 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.tans.tfiletranserdesktop.net.RemoteDevice
-import com.tans.tfiletranserdesktop.net.launchBroadcastReceiver
+import com.tans.tfiletranserdesktop.logs.JvmLog
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.dialogs.BaseStatableDialog
 import com.tans.tfiletranserdesktop.ui.resources.*
+import com.tans.tfiletransporter.netty.getBroadcastAddress
+import com.tans.tfiletransporter.transferproto.broadcastconn.*
+import com.tans.tfiletransporter.transferproto.broadcastconn.model.RemoteDevice
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx2.await
-import kotlinx.coroutines.rx2.rxSingle
+import kotlinx.coroutines.withContext
 import java.net.InetAddress
-import java.net.InetSocketAddress
-import java.util.*
+import java.util.concurrent.atomic.AtomicReference
 
 @Composable
 fun showBroadcastReceiverDialog(
     localAddress: InetAddress,
-    noneBroadcast: Boolean,
     localDeviceInfo: String,
     connectTo: (remoteDevice: RemoteDevice) -> Unit,
     cancelRequest: () -> Unit
 ) {
     val dialog = BroadcastReceiverDialog(
         localAddress = localAddress,
-        noneBroadcast = noneBroadcast,
         localDeviceInfo = localDeviceInfo,
         connectTo = connectTo,
         cancelRequest = cancelRequest
@@ -49,13 +47,11 @@ fun showBroadcastReceiverDialog(
 data class BroadcastReceiverState(
     val searchedDevices: List<RemoteDevice> = emptyList(),
     val showLoading: Boolean = false,
-    val requestConnectTo: Optional<RemoteDevice> = Optional.empty(),
-    val connectHasAccept: Optional<RemoteDevice> = Optional.empty()
 )
 
+@Suppress("FunctionName")
 class BroadcastReceiverDialog(
     val localAddress: InetAddress,
-    val noneBroadcast: Boolean,
     val localDeviceInfo: String,
     val connectTo: (remoteDevice: RemoteDevice) -> Unit,
     cancelRequest: () -> Unit
@@ -64,59 +60,34 @@ class BroadcastReceiverDialog(
     cancelRequest = cancelRequest
 ) {
 
+    private val receiver: AtomicReference<BroadcastReceiver?> = AtomicReference(null)
+
     override fun initData() {
         launch {
-            val result = kotlin.runCatching {
-                launchBroadcastReceiver(
-                    localAddress = localAddress,
-                    noneBroadcast = noneBroadcast,
-                    handle = { receiverJob ->
-                        val stateJob = launch {
-                            bindState()
-                                .map { it.map { (device, _) -> device } }
-                                .distinctUntilChanged()
-                                .flatMapSingle { newDevices ->
-                                    this@BroadcastReceiverDialog.updateState { it.copy(searchedDevices = newDevices) }
-                                }
-                                .ignoreElements()
-                                .await()
-                        }
-                        val requestJob = launch {
-                            this@BroadcastReceiverDialog.bindState()
-                                .map { it.requestConnectTo }
-                                .filter { it.isPresent }
-                                .distinctUntilChanged { t1, t2 -> t1 === t2}
-                                .flatMapSingle {
-                                    rxSingle(Dispatchers.IO) {
-                                        this@BroadcastReceiverDialog.updateState { it.copy(showLoading = true) }.await()
-                                        val address = (it.get().first as InetSocketAddress).address
-                                        println("Address: ${address.hostAddress}")
-                                        if (connectTo(
-                                            address = address,
-                                            yourDeviceInfo = localDeviceInfo
-                                        )) {
-                                            this@BroadcastReceiverDialog.updateState { oldState -> oldState.copy(connectHasAccept = it) }.await()
-                                        }
-                                        this@BroadcastReceiverDialog.updateState { it.copy(showLoading = false) }.await()
-                                    }
-                                }
-                                .ignoreElements()
-                                .await()
-                        }
-                        stateJob.join()
-                        requestJob.join()
-                        receiverJob.cancel("Dialog close")
+            val receiver = BroadcastReceiver(deviceName = localDeviceInfo, log = JvmLog)
+            this@BroadcastReceiverDialog.receiver.get()?.closeConnectionIfActive()
+            this@BroadcastReceiverDialog.receiver.set(receiver)
+            runCatching {
+                withContext(Dispatchers.IO) {
+                    receiver.startReceiverSuspend(localAddress, localAddress.getBroadcastAddress().first)
+                }
+            }.onSuccess {
+                receiver.addObserver(object : BroadcastReceiverObserver {
+                    override fun onNewBroadcast(
+                        remoteDevice: RemoteDevice
+                    ) {}
+                    override fun onNewState(state: com.tans.tfiletransporter.transferproto.broadcastconn.BroadcastReceiverState) {}
+                    override fun onActiveRemoteDevicesUpdate(remoteDevices: List<RemoteDevice>) {
+                        launch { updateState { s -> s.copy(searchedDevices = remoteDevices, showLoading = remoteDevices.isEmpty()) }.await() }
                     }
-                )
+                })
+                receiver.waitCloseSuspend()
+                JvmLog.d(TAG, "Canceled")
+                cancel()
+            }.onFailure {
+                JvmLog.e(TAG, "Receiver error: ${it.message}", it)
+                cancel()
             }
-            if (result.isFailure) { result.exceptionOrNull()?.printStackTrace() }
-            this@BroadcastReceiverDialog.cancel()
-        }
-
-        launch {
-            val accept = bindState().map { it.connectHasAccept }.filter { it.isPresent }.firstOrError().map { it.get() }.await()
-            connectTo(accept)
-            this@BroadcastReceiverDialog.cancel()
         }
     }
 
@@ -170,22 +141,32 @@ class BroadcastReceiverDialog(
         ) {
             items(
                 count = devices.size,
-                key = { i -> devices[i].first }
+                key = { i -> devices[i].remoteAddress }
             ) { i ->
                 val device = devices[i]
                 Column(
                     modifier = Modifier.fillMaxWidth().height(55.dp).padding(start = 5.dp)
                         .clickable {
                             launch {
-                                updateState { oldState ->
-                                    oldState.copy(requestConnectTo = Optional.of(device))
-                                }.await()
+                                val receiver = receiver.get()
+                                if (receiver != null) {
+                                    runCatching {
+                                        receiver.requestFileTransferSuspend(device.remoteAddress.address)
+                                    }.onSuccess {
+                                        connectTo(device)
+                                    }.onFailure {
+                                        JvmLog.e(TAG, "Request transfer file fail: ${it.message}", it)
+                                    }
+                                } else {
+                                    JvmLog.e(TAG, "Receiver is null.")
+                                }
+                                cancel()
                             }
                         },
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = device.second,
+                        text = device.deviceName,
                         style = TextStyle(color = colorTextBlack, fontSize = 14.sp, fontWeight = FontWeight.W500),
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -193,12 +174,16 @@ class BroadcastReceiverDialog(
                     Spacer(modifier = Modifier.height(5.dp))
 
                     Text(
-                        text = (device.first as InetSocketAddress).hostString,
+                        text = device.remoteAddress.hostString,
                         style = TextStyle(color = colorTextGray, fontSize = 12.sp, fontWeight = FontWeight.W500),
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
         }
+    }
+
+    companion object {
+        private const val TAG = "BroadcastReceiverDialog"
     }
 }
