@@ -26,7 +26,7 @@ import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
 import com.tans.tfiletranserdesktop.ui.resources.colorTextBlack
 import com.tans.tfiletranserdesktop.ui.resources.colorTextGray
-import com.tans.tfiletranserdesktop.utils.getSizeString
+import com.tans.tfiletransporter.toSizeString
 import com.tans.tfiletransporter.transferproto.fileexplore.requestSendFilesSuspend
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -121,7 +121,7 @@ fun FileList(fileTree: FileTree, selectedFiles: Set<FileLeaf.CommonFileLeaf>, so
                                 Spacer(Modifier.width(2.dp))
                                 Text(text = if (isDir)
                                     "${(fileOrDir as FileLeaf.DirectoryFileLeaf).childrenCount} files"
-                                else getSizeString((fileOrDir as FileLeaf.CommonFileLeaf).size),
+                                else (fileOrDir as FileLeaf.CommonFileLeaf).size.toSizeString(),
                                         style = TextStyle(color = colorTextGray, fontSize = 14.sp),
                                         maxLines = 1
                                 )

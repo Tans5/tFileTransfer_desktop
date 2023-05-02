@@ -11,7 +11,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.tans.tfiletranserdesktop.net.LOCAL_DEVICE
+import com.tans.tfiletranserdesktop.file.LOCAL_DEVICE
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute

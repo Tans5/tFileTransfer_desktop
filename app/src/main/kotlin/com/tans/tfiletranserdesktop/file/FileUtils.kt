@@ -1,5 +1,6 @@
 package com.tans.tfiletranserdesktop.file
 
+import com.tans.tfiletranserdesktop.utils.getCurrentOs
 import com.tans.tfiletransporter.transferproto.fileexplore.model.FileExploreDir
 import com.tans.tfiletransporter.transferproto.fileexplore.model.FileExploreFile
 import com.tans.tfiletransporter.transferproto.fileexplore.model.ScanDirReq
@@ -22,6 +23,11 @@ val downloadDir: File by lazy {
     }
     file
 }
+
+val USER_NAME = System.getProperty("user.name") ?: ""
+val DEVICE_NAME = getCurrentOs().name
+
+val LOCAL_DEVICE = "$USER_NAME's $DEVICE_NAME"
 
 const val FILE_TRANSFER_MAX_CONNECTION = 8
 const val FILE_TRANSFER_BUFFER_SIZE = 512 * 1024L
