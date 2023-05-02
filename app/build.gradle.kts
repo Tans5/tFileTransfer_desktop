@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "me.tanstan"
-version = "1.3.0"
+version = "2.0.0"
 
 repositories {
     mavenCentral()
@@ -49,7 +49,18 @@ compose.desktop {
         mainClass = "MainKt"
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Rpm, TargetFormat.Exe)
-            packageName = "tFileTransfer_desktop"
+            packageName = "tFileTransfer"
+        }
+        nativeDistributions {
+            macOS {
+                iconFile.set(project.file("launcher-icons/launcher_macos.icns"))
+            }
+            windows {
+                iconFile.set(project.file("launcher-icons/launcher_windows.ico"))
+            }
+            linux {
+                iconFile.set(project.file("launcher-icons/launcher_linux.png"))
+            }
         }
     }
 }
