@@ -12,6 +12,7 @@ version = "2.0.0"
 
 repositories {
     mavenCentral()
+    google()
     maven { url = uri("https://maven.pkg.jetbrains.space/public/p/compose/dev") }
 }
 
