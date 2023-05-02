@@ -18,7 +18,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.tans.tfiletranserdesktop.net.model.MessageModel
+import com.tans.tfiletranserdesktop.logs.JvmLog
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
@@ -26,35 +26,15 @@ import com.tans.tfiletranserdesktop.ui.resources.colorLightGrayBg
 import com.tans.tfiletranserdesktop.ui.resources.colorTeal700
 import com.tans.tfiletranserdesktop.ui.resources.colorTextBlack
 import com.tans.tfiletranserdesktop.ui.resources.colorWhite
+import com.tans.tfiletransporter.transferproto.fileexplore.requestMsgSuspend
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.rx2.await
 
-
-data class MessageContentState(
-    val messages: List<Message> = emptyList()
-)
 
 class MessageContent(
     val fileTransferScreen: FileTransferScreen
-) : BaseScreen<MessageContentState>(MessageContentState()) {
+) : BaseScreen<Unit>(Unit) {
 
-    override fun initData() {
-        launch {
-            fileTransferScreen.remoteMessageEvent
-                .switchMapSingle { remoteMessage ->
-                    val newMessage = Message(
-                        isRemote = true,
-                        timeMilli = System.currentTimeMillis(),
-                        message = remoteMessage
-                    )
-                    updateState { oldState ->
-                        oldState.copy(messages = oldState.messages + newMessage)
-                    }
-                }
-                .ignoreElements()
-                .await()
-        }
-    }
+    override fun initData() {}
 
     @Composable
     override fun start(screenRoute: ScreenRoute) {
@@ -66,7 +46,7 @@ class MessageContent(
                         .fillMaxWidth()
                 ) {
                     Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
-                        val messagesState = bindState().map { it.messages }.distinctUntilChanged().subscribeAsState(emptyList())
+                        val messagesState = fileTransferScreen.bindState().map { it.messages }.distinctUntilChanged().subscribeAsState(emptyList())
                         val messages = messagesState.value
                         LazyColumn(
                             modifier = Modifier.fillMaxWidth().align(Alignment.BottomEnd)
@@ -83,7 +63,7 @@ class MessageContent(
                                         bottom = 10.dp
                                     )
                                 ) {
-                                    if (message.isRemote) {
+                                    if (message.fromRemote) {
                                         Row(Modifier.fillMaxWidth()) {
                                             Card(
                                                 shape = RoundedCornerShape(10.dp),
@@ -91,7 +71,7 @@ class MessageContent(
                                             ) {
                                                 SelectionContainer {
                                                     Text(
-                                                        text = message.message,
+                                                        text = message.msg,
                                                         style = TextStyle(
                                                             color = colorWhite,
                                                             fontSize = 14.sp
@@ -113,7 +93,7 @@ class MessageContent(
                                             ) {
                                                 SelectionContainer {
                                                     Text(
-                                                        text = message.message,
+                                                        text = message.msg,
                                                         style = TextStyle(
                                                             color = colorTextBlack,
                                                             fontSize = 14.sp
@@ -147,18 +127,22 @@ class MessageContent(
                                 launch {
                                     val inputLocal = input.value
                                     if (inputLocal.isNotBlank()) {
-                                        val connection = fileTransferScreen.getFileExploreConnection().await()
-                                        connection.sendFileExploreContentToRemote(MessageModel(inputLocal))
-                                        updateState { oldState ->
-                                            val newMessage = Message(
-                                                isRemote = false,
-                                                timeMilli = System.currentTimeMillis(),
-                                                message = inputLocal
+                                        runCatching {
+                                            fileTransferScreen.fileExplore
+                                                .requestMsgSuspend(inputLocal)
+                                        }.onSuccess {
+                                            fileTransferScreen.updateNewMessage(
+                                                Message(
+                                                    time = System.currentTimeMillis(),
+                                                    msg = inputLocal,
+                                                    fromRemote = false
+                                                )
                                             )
-                                            oldState.copy(messages = oldState.messages + newMessage)
-                                        }.await()
+                                            input.value = ""
+                                        }.onFailure {
+                                            JvmLog.e(TAG, "Send msg error: ${it.message}", it)
+                                        }
                                     }
-                                    input.value = ""
                                 }
                             },
                             modifier = Modifier.align(Alignment.CenterVertically)
@@ -177,6 +161,10 @@ class MessageContent(
 
     fun refresh() {
 
+    }
+
+    companion object {
+        private const val TAG = "MessageContent"
     }
 
 }

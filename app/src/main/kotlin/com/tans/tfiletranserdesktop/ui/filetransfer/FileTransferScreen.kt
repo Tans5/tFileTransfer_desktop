@@ -132,7 +132,7 @@ class FileTransferScreen(
         }
     }
 
-    private val fileExplore: FileExplore by lazy {
+    val fileExplore: FileExplore by lazy {
         FileExplore(
             log = JvmLog,
             scanDirRequest = scanDirRequest,
