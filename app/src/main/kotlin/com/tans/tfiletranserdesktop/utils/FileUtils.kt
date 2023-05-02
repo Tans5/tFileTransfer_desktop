@@ -1,5 +1,8 @@
 package com.tans.tfiletranserdesktop.utils
 
+import com.tans.tfiletransporter.GB
+import com.tans.tfiletransporter.KB
+import com.tans.tfiletransporter.MB
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.Files

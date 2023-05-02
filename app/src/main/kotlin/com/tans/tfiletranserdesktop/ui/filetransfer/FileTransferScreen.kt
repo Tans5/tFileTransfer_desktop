@@ -17,29 +17,23 @@ import androidx.compose.ui.unit.sp
 import com.tans.tfiletranserdesktop.file.*
 import com.tans.tfiletranserdesktop.logs.JvmLog
 import com.tans.tfiletranserdesktop.net.model.*
-import com.tans.tfiletranserdesktop.net.netty.fileexplore.FileExploreConnection
-import com.tans.tfiletranserdesktop.net.netty.filetransfer.sendFileObservable
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
 import com.tans.tfiletranserdesktop.ui.resources.*
-import com.tans.tfiletranserdesktop.utils.getSizeString
+import com.tans.tfiletransporter.toSizeString
 import com.tans.tfiletransporter.transferproto.broadcastconn.model.RemoteDevice
 import com.tans.tfiletransporter.transferproto.fileexplore.*
 import com.tans.tfiletransporter.transferproto.fileexplore.model.*
 import com.tans.tfiletransporter.transferproto.filetransfer.*
 import com.tans.tfiletransporter.transferproto.filetransfer.model.SenderFile
-import io.reactivex.Single
-import io.reactivex.rxkotlin.ofType
 import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.Subject
 import kotlinx.coroutines.*
 import kotlinx.coroutines.rx2.await
 import java.io.File
 import java.net.InetAddress
-import java.util.*
 import java.util.concurrent.Executor
-import java.util.concurrent.atomic.AtomicBoolean
 
 enum class FileTransferTab(val tabTag: String) {
     MyFolder("MY FOLDER"),
@@ -240,7 +234,6 @@ class FileTransferScreen(
         }
     }
 
-    @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
     fun sendFiles(files: List<FileExploreFile>, bufferSize: Long) {
         launch(Dispatchers.IO) {
             val fixedFiles = files.filter { it.size > 0 }
@@ -278,8 +271,8 @@ class FileTransferScreen(
                 }
             }
             sender.addObserver(object : FileTransferObserver {
-                override fun onNewState(senderState: FileTransferState) {
-                    when (senderState) {
+                override fun onNewState(s: FileTransferState) {
+                    when (s) {
                         FileTransferState.NotExecute -> {}
                         FileTransferState.Started -> {
                             speedCalculator.start()
@@ -291,10 +284,10 @@ class FileTransferScreen(
                         is FileTransferState.Error, is FileTransferState.RemoteError -> {
                             speedCalculator.stop()
                             updateSenderDialog {
-                                val msg = if (senderState is FileTransferState.Error) {
-                                    senderState.msg
+                                val msg = if (s is FileTransferState.Error) {
+                                    s.msg
                                 } else {
-                                    (senderState as FileTransferState.RemoteError).msg
+                                    (s as FileTransferState.RemoteError).msg
                                 }
                                 FileTransferDialog.Error(msg = msg)
                             }
@@ -325,64 +318,85 @@ class FileTransferScreen(
 
     fun downloadFiles(files: List<FileExploreFile>, maxConnection: Int) {
         launch(Dispatchers.IO) {
-
-        }
-    }
-
-    fun sendingFiles(files: List<FileMd5>) {
-        launch(Dispatchers.IO) {
-            val result = runCatching {
-                val isError = AtomicBoolean(false)
-                for ((i, file) in files.withIndex()) {
-
-                    val task: Deferred<Unit> = async {
-                        sendFileObservable(
-                            fileMd5 = file,
-                            localAddress = localAddress
-                        )
-                            .flatMapSingle { hasSend ->
-                                this@FileTransferScreen.updateState { oldState ->
-                                    val dialogType = oldState.showDialog
-                                    if (dialogType is FileTransferDialog.SendingFiles) {
-                                        oldState.copy(showDialog = dialogType.copy(sendSize = hasSend))
-                                    } else {
-                                        oldState
-                                    }
-                                }
+            val fixedFiles = files.filter { it.size > 0 }
+            if (fixedFiles.isEmpty()) return@launch
+            val downloader = FileDownloader(
+                downloadDir = downloadDir,
+                files = fixedFiles,
+                connectAddress = remoteAddress,
+                maxConnectionSize = maxConnection.toLong(),
+                log = JvmLog
+            )
+            updateState {
+                it.copy(showDialog = FileTransferDialog.DownloadFiles(
+                    fileCount = files.size,
+                    index = 1,
+                    fileName = files[0].name,
+                    fileSize = files[0].size,
+                    downloadedSize = 0L,
+                    speed = "",
+                    task = downloader
+                ))
+            }.await()
+            fun updateDownloaderDialog(updateDialog: (FileTransferDialog.DownloadFiles) -> FileTransferDialog) {
+                ioExecutor.execute {
+                    launch {
+                        updateState { s->
+                            val dialog = s.showDialog
+                            if (dialog is FileTransferDialog.DownloadFiles) {
+                                s.copy(showDialog = updateDialog(dialog))
+                            } else {
+                                s
                             }
-                            .ignoreElements()
-                            .toSingleDefault(Unit)
-                            .onErrorResumeNext {
-                                isError.set(true)
-                                it.printStackTrace()
-                                Single.just(Unit)
-                            }
-                            .await()
-                    }
-
-                    this@FileTransferScreen.updateState { oldState ->
-                        val d = FileTransferDialog.SendingFiles(
-                            fileCount = files.size,
-                            index = i,
-                            fileName = file.file.name,
-                            fileSize = file.file.size,
-                            sendSize = 0L,
-                            task = task
-                        )
-                        oldState.copy(showDialog = d)
-                    }.await()
-                    task.await()
-                    if (isError.get()) {
-                        break
+                        }.await()
                     }
                 }
             }
-            if (result.isFailure) {
-                result.exceptionOrNull()?.printStackTrace()
-            }
-            this@FileTransferScreen.updateState { oldState ->
-                oldState.copy(showDialog = FileTransferDialog.None)
-            }.await()
+
+            downloader.addObserver(object : FileTransferObserver {
+                override fun onNewState(s: FileTransferState) {
+                    when (s) {
+                        FileTransferState.NotExecute -> {}
+                        FileTransferState.Started -> {
+                            speedCalculator.start()
+                        }
+                        FileTransferState.Canceled, FileTransferState.Finished -> {
+                            speedCalculator.stop()
+                            updateDownloaderDialog { FileTransferDialog.None }
+                        }
+                        is FileTransferState.Error, is FileTransferState.RemoteError -> {
+                            speedCalculator.stop()
+                            updateDownloaderDialog {
+                                val msg = if (s is FileTransferState.Error) {
+                                    s.msg
+                                } else {
+                                    (s as FileTransferState.RemoteError).msg
+                                }
+                                FileTransferDialog.Error(msg = msg)
+                            }
+                        }
+                    }
+                }
+
+                override fun onStartFile(file: FileExploreFile) {
+                    speedCalculator.reset()
+                    updateDownloaderDialog {
+                        it.copy(index = fixedFiles.indexOf(file), fileName = file.name, fileSize = file.size)
+                    }
+                }
+
+                override fun onProgressUpdate(file: FileExploreFile, progress: Long) {
+                    speedCalculator.updateCurrentSize(progress)
+                    updateDownloaderDialog {
+                        it.copy(downloadedSize = progress)
+                    }
+                }
+
+                override fun onEndFile(file: FileExploreFile) {}
+
+            })
+
+            downloader.start()
         }
     }
 
@@ -557,15 +571,26 @@ class FileTransferScreen(
                         )
                         Spacer(Modifier.height(8.dp))
                         val processText = if (dialog is FileTransferDialog.SendingFiles) {
-                            "${getSizeString(dialog.sendSize)}/${getSizeString(dialog.fileSize)}"
+                            "${dialog.sendSize.toSizeString()}/${dialog.fileSize.toSizeString()}"
                         } else {
-                            "${getSizeString((dialog as FileTransferDialog.DownloadFiles).downloadedSize)}/${getSizeString(dialog.fileSize)}"
+                            "${(dialog as FileTransferDialog.DownloadFiles).downloadedSize.toSizeString()}/${dialog.fileSize.toSizeString()}"
                         }
-                        Text(
-                            text = processText,
-                            modifier = Modifier.align(BiasAlignment.Horizontal(1f)),
-                            style = TextStyle(color = colorTextGray, fontSize = 12.sp)
-                        )
+                        Row {
+                            Text(
+                                text = processText,
+                                style = TextStyle(color = colorTextGray, fontSize = 12.sp)
+                            )
+                            Spacer(Modifier.weight(1f))
+                            val speed = if (dialog is FileTransferDialog.SendingFiles) {
+                                dialog.speed
+                            } else {
+                                (dialog as FileTransferDialog.DownloadFiles).speed
+                            }
+                            Text(
+                                text = speed,
+                                style = TextStyle(color = colorTextGray, fontSize = 12.sp)
+                            )
+                        }
                         Spacer(Modifier.height(4.dp))
                         TextButton(
                             modifier = Modifier.align(BiasAlignment.Horizontal(1f)),
@@ -600,18 +625,6 @@ class FileTransferScreen(
         }
     }
 
-    fun getFileExploreConnection(): Single<FileExploreConnection> = bindState()
-        .map { it.connectStatus }
-        .ofType<ConnectStatus.Connected>()
-        .map { it.fileExploreConnection }
-        .firstOrError()
-
-    fun getFileExploreHandshakeModel(): Single<FileExploreHandshakeModel> = bindState()
-        .map { it.connectStatus }
-        .ofType<ConnectStatus.Connected>()
-        .map { it.handshakeModel }
-        .firstOrError()
-
     suspend fun updateNewMessage(msg: Message) {
         updateState { it.copy(messages = it.messages + msg) }.await()
     }
@@ -622,7 +635,7 @@ class FileTransferScreen(
         remoteFolderContent.stop(screenRoute)
         messageContent.stop(screenRoute)
         ioExecutor.execute {
-            getFileExploreConnection().blockingGet().close(true)
+            fileExplore.closeConnectionIfActive()
         }
     }
 
