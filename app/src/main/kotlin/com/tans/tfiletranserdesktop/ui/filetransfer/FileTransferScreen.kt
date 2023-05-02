@@ -318,6 +318,7 @@ class FileTransferScreen(
 
     fun downloadFiles(files: List<FileExploreFile>, maxConnection: Int) {
         launch(Dispatchers.IO) {
+            delay(200L)
             val fixedFiles = files.filter { it.size > 0 }
             if (fixedFiles.isEmpty()) return@launch
             val downloader = FileDownloader(

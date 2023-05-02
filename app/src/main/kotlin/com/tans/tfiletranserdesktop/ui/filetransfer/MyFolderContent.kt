@@ -20,32 +20,30 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tans.tfiletranserdesktop.file.*
-import com.tans.tfiletranserdesktop.net.model.FileMd5
-import com.tans.tfiletranserdesktop.net.model.ShareFilesModel
+import com.tans.tfiletranserdesktop.logs.JvmLog
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
 import com.tans.tfiletranserdesktop.ui.resources.colorTextBlack
 import com.tans.tfiletranserdesktop.ui.resources.colorTextGray
-import com.tans.tfiletranserdesktop.utils.getFilePathMd5
 import com.tans.tfiletranserdesktop.utils.getSizeString
-import io.reactivex.Single
+import com.tans.tfiletransporter.transferproto.fileexplore.requestSendFilesSuspend
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx2.await
-import java.nio.file.Files
-import java.nio.file.Paths
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import kotlin.streams.toList
+import java.util.Optional
+import kotlin.jvm.optionals.getOrNull
 
 enum class FileSortType {
     SortByDate,
     SortByName
 }
 
-fun List<CommonFileLeaf>.sortFile(sortType: FileSortType): List<CommonFileLeaf> = when (sortType) {
+fun List<FileLeaf.CommonFileLeaf>.sortFile(sortType: FileSortType): List<FileLeaf.CommonFileLeaf> = when (sortType) {
     FileSortType.SortByDate -> {
         sortedByDescending { it.lastModified }
     }
@@ -54,7 +52,7 @@ fun List<CommonFileLeaf>.sortFile(sortType: FileSortType): List<CommonFileLeaf> 
     }
 }
 
-fun List<DirectoryFileLeaf>.sortDir(sortType: FileSortType): List<DirectoryFileLeaf> = when (sortType) {
+fun List<FileLeaf.DirectoryFileLeaf>.sortDir(sortType: FileSortType): List<FileLeaf.DirectoryFileLeaf> = when (sortType) {
     FileSortType.SortByDate -> {
         sortedByDescending { it.lastModified }
     }
@@ -64,15 +62,16 @@ fun List<DirectoryFileLeaf>.sortDir(sortType: FileSortType): List<DirectoryFileL
 }
 
 data class MyFolderContentState(
-    val fileTree: FileTree = newRootFileTree(),
-    val selectedFiles: Set<CommonFileLeaf> = emptySet(),
+    val fileTree: Optional<FileTree> = Optional.empty(),
+    val selectedFiles: Set<FileLeaf.CommonFileLeaf> = emptySet(),
     val sortType: FileSortType = FileSortType.SortByName
 )
 
 val fileDateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd")
 
+@Suppress("FunctionName")
 @Composable
-fun FileList(fileTree: FileTree, selectedFiles: Set<CommonFileLeaf>, sortType: FileSortType, onClick: (fileOrDir: FileLeaf) -> Unit) {
+fun FileList(fileTree: FileTree, selectedFiles: Set<FileLeaf.CommonFileLeaf>, sortType: FileSortType, onClick: (fileOrDir: FileLeaf) -> Unit) {
     Column(modifier = Modifier.fillMaxSize()) {
         Box(Modifier.padding(10.dp)) {
             Text(text = fileTree.path, style = TextStyle(color = colorTextGray, fontSize = 15.sp), maxLines = 1)
@@ -82,7 +81,7 @@ fun FileList(fileTree: FileTree, selectedFiles: Set<CommonFileLeaf>, sortType: F
         LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
             items(count = fileAndDirs.size, key = { i -> fileAndDirs[i].path }) { i ->
                 val fileOrDir = fileAndDirs[i]
-                val isDir = fileOrDir is DirectoryFileLeaf
+                val isDir = fileOrDir is FileLeaf.DirectoryFileLeaf
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Row(
                             modifier = Modifier
@@ -121,8 +120,8 @@ fun FileList(fileTree: FileTree, selectedFiles: Set<CommonFileLeaf>, sortType: F
                                 )
                                 Spacer(Modifier.width(2.dp))
                                 Text(text = if (isDir)
-                                    "${(fileOrDir as DirectoryFileLeaf).childrenCount} files"
-                                else getSizeString((fileOrDir as CommonFileLeaf).size),
+                                    "${(fileOrDir as FileLeaf.DirectoryFileLeaf).childrenCount} files"
+                                else getSizeString((fileOrDir as FileLeaf.CommonFileLeaf).size),
                                         style = TextStyle(color = colorTextGray, fontSize = 14.sp),
                                         maxLines = 1
                                 )
@@ -153,55 +152,9 @@ class MyFolderContent(val fileTransferScreen: FileTransferScreen) : BaseScreen<M
 
     override fun initData() {
         launch {
-            bindState()
-                .map { it.fileTree }
-                .distinctUntilChanged()
-                .flatMapSingle { oldTree ->
-                    if (!oldTree.notNeedRefresh) {
-                        updateState { oldState ->
-                            val path = if (oldTree.isRootFileTree()) Paths.get(FileConstants.USER_HOME) else Paths.get(FileConstants.USER_HOME + oldTree.path)
-                            val children = if (Files.isReadable(path)) {
-                                Files.list(path)
-                                    .filter { Files.isReadable(it) }
-                                    .map { p ->
-                                        if (Files.isDirectory(p)) {
-                                            DirectoryYoungLeaf(
-                                                name = p.fileName.toString(),
-                                                childrenCount = Files.list(p).let { s ->
-                                                    val size = s.count()
-                                                    s.close()
-                                                    size
-                                                },
-                                                lastModified = Files.getLastModifiedTime(p).toMillis()
-                                            )
-                                        } else {
-                                            FileYoungLeaf(
-                                                name = p.fileName.toString(),
-                                                size = Files.size(p),
-                                                lastModified = Files.getLastModifiedTime(p).toMillis()
-                                            )
-                                        }
-                                    }
-                                    .toArray()
-                                    .filterIsInstance<YoungLeaf>()
-                            } else {
-                                emptyList()
-                            }
-
-                            oldState.copy(
-                                fileTree = children.refreshFileTree(oldTree),
-                                selectedFiles = emptySet()
-                            )
-                        }
-                            .map { }
-                            .onErrorResumeNext {
-                                it.printStackTrace()
-                                Single.just(Unit)
-                            }
-                    } else {
-                        Single.just(Unit)
-                    }
-                }.ignoreElements().await()
+            updateState {
+                MyFolderContentState(fileTree = Optional.of(createLocalRootTree(userHomeDir)))
+            }.await()
         }
     }
 
@@ -210,46 +163,57 @@ class MyFolderContent(val fileTransferScreen: FileTransferScreen) : BaseScreen<M
         Box(modifier = Modifier.fillMaxSize()) {
             val state = bindState().distinctUntilChanged().subscribeAsState(MyFolderContentState())
             state.value.apply {
-                FileList(
-                    fileTree = fileTree,
-                    selectedFiles = selectedFiles,
-                    sortType = sortType
-                ) { fileOrDir: FileLeaf ->  
-                    launch {
-                        updateState { oldState ->
-                            when (fileOrDir) {
-                                is CommonFileLeaf -> {
-                                    val oldSelectedFiles = oldState.selectedFiles
-                                    val newSelectedFiles = if (oldSelectedFiles.contains(fileOrDir)) {
-                                        oldSelectedFiles - fileOrDir
-                                    } else {
-                                        oldSelectedFiles + fileOrDir
-                                    }
-                                    oldState.copy(selectedFiles = newSelectedFiles)
-                                }
+                val fileTree = fileTree.getOrNull()
+                if (fileTree != null) {
+                    FileList(
+                        fileTree = fileTree,
+                        selectedFiles = selectedFiles,
+                        sortType = sortType
+                    ) { fileOrDir: FileLeaf ->
+                        launch {
+                            val tree = bindState().map { it.fileTree }.firstOrError().await().getOrNull()
+                            if (tree != null) {
+                                updateState { oldState ->
+                                    when (fileOrDir) {
+                                        is FileLeaf.CommonFileLeaf -> {
+                                            val oldSelectedFiles = oldState.selectedFiles
+                                            val newSelectedFiles = if (oldSelectedFiles.contains(fileOrDir)) {
+                                                oldSelectedFiles - fileOrDir
+                                            } else {
+                                                oldSelectedFiles + fileOrDir
+                                            }
+                                            oldState.copy(selectedFiles = newSelectedFiles)
+                                        }
 
-                                is DirectoryFileLeaf -> {
-                                    oldState.copy(fileTree = fileOrDir.newSubTree(oldState.fileTree), selectedFiles = emptySet())
-                                }
+                                        is FileLeaf.DirectoryFileLeaf -> {
+                                            oldState.copy(fileTree = Optional.of(tree.newLocalSubTree(fileOrDir, userHomeDir)), selectedFiles = emptySet())
+                                        }
+                                    }
+                                }.await()
                             }
-                        }.await()
+                        }
                     }
                 }
             }
 
             Box(modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp)) {
                 FloatingActionButton(onClick = {
-                    launch {
-                        val selectFiles = bindState().map { it.selectedFiles }.firstOrError().await()
-                        val files = selectFiles.map { it.toFile() }.map { FileMd5(md5 = Paths.get(FileConstants.USER_HOME, it.path).getFilePathMd5(), it) }
-                        if (selectFiles.isNotEmpty()) {
-                            val connection = fileTransferScreen.getFileExploreConnection().await()
-                            connection.sendFileExploreContentToRemote(ShareFilesModel(files))
-                            fileTransferScreen.sendingFiles(files)
+                    launch(Dispatchers.IO) {
+                        val selectFiles = bindState().map { it.selectedFiles }.firstOrError().await().filter { it.size > 0 }
+                        val exploreFiles = selectFiles.toExploreFiles()
+                        if (exploreFiles.isNotEmpty()) {
+                            runCatching {
+                                fileTransferScreen.fileExplore
+                                    .requestSendFilesSuspend(exploreFiles)
+                            }.onSuccess {
+                                updateState { oldState ->
+                                    oldState.copy(selectedFiles = emptySet())
+                                }.await()
+                                fileTransferScreen.sendFiles(files = exploreFiles, bufferSize = it.bufferSize.toLong())
+                            }.onFailure {
+                                JvmLog.e(TAG, "Request send msg error: ${it.message}", it)
+                            }
                         }
-                        updateState { oldState ->
-                            oldState.copy(selectedFiles = emptySet())
-                        }.await()
                     }
                 }) {
                     Image(painter = painterResource("images/share_variant_outline.xml"), contentDescription = null)
@@ -259,13 +223,19 @@ class MyFolderContent(val fileTransferScreen: FileTransferScreen) : BaseScreen<M
     }
 
     fun back(): Boolean {
-        return if (bindState().firstOrError().blockingGet().fileTree.isRootFileTree()) {
+        return if (bindState().firstOrError().blockingGet().fileTree.getOrNull()?.isRootFileTree() == false) {
             false
         } else {
-            updateState { state ->
-                if (state.fileTree.parentTree == null) state else MyFolderContentState(
-                    fileTree = state.fileTree.parentTree, selectedFiles = emptySet())
-            }.subscribe()
+            launch {
+                updateState { state ->
+                    val pt = state.fileTree.getOrNull()?.parentTree
+                    if (pt != null) {
+                        state.copy(fileTree = Optional.of(pt), selectedFiles = emptySet())
+                    } else {
+                        state
+                    }
+                }.await()
+            }
             true
         }
     }
@@ -273,10 +243,29 @@ class MyFolderContent(val fileTransferScreen: FileTransferScreen) : BaseScreen<M
     fun refresh() {
         launch {
             updateState { oldState ->
-                val newTree = oldState.fileTree.copy(notNeedRefresh = false)
-                oldState.copy(fileTree = newTree, selectedFiles = emptySet())
+                val oldTree = oldState.fileTree.getOrNull()
+                if (oldTree == null || oldTree.isRootFileTree()) {
+                    oldState.copy(
+                        fileTree = Optional.of(createLocalRootTree(userHomeDir)),
+                        selectedFiles = emptySet()
+                    )
+                } else {
+                    val parentTree = oldTree.parentTree
+                    val dirLeaf = parentTree?.dirLeafs?.find { it.path == oldTree.path }
+                    if (parentTree != null && dirLeaf != null) {
+                        oldState.copy(
+                            fileTree = Optional.of(parentTree.newLocalSubTree(dirLeaf, userHomeDir)),
+                            selectedFiles = emptySet()
+                        )
+                    } else {
+                        oldState.copy(selectedFiles = emptySet())
+                    }
+                }
             }.await()
         }
     }
 
+    companion object {
+        private const val TAG = "MyFolderContent"
+    }
 }
