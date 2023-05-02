@@ -29,11 +29,6 @@ import com.tans.tfiletranserdesktop.ui.resources.colorWhite
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx2.await
 
-data class Message(
-    val isRemote: Boolean,
-    val timeMilli: Long,
-    val message: String
-)
 
 data class MessageContentState(
     val messages: List<Message> = emptyList()

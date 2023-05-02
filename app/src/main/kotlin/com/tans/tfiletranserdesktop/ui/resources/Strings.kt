@@ -23,3 +23,10 @@ const val stringBroadcastRequestDialogDeny = "DENY"
 // Broadcast Receiver Dialog
 const val stringBroadcastReceiverDialogTitle = "Searching..."
 const val stringBroadcastReceiverDialogCancel = "CANCEL"
+
+
+// Handshake Error
+const val stringHandshakeErrorTitle = "Handshake Error"
+
+// Connection Error
+const val stringConnectionErrorTitle = "Connection Error"

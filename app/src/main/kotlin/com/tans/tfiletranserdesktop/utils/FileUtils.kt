@@ -1,8 +1,5 @@
 package com.tans.tfiletranserdesktop.utils
 
-import com.tans.tfiletranserdesktop.file.FileConstants.GB
-import com.tans.tfiletranserdesktop.file.FileConstants.KB
-import com.tans.tfiletranserdesktop.file.FileConstants.MB
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.file.Files
@@ -10,7 +7,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 import java.security.MessageDigest
-import java.text.DecimalFormat
 
 fun Path.newChildFile(name: String): Path {
     val childPath = Paths.get(toAbsolutePath().toString(), name)

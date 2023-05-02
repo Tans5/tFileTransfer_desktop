@@ -1,6 +1,5 @@
 package com.tans.tfiletranserdesktop.net.netty.filetransfer
 
-import com.tans.tfiletranserdesktop.file.FileConstants
 import com.tans.tfiletranserdesktop.logs.Log
 import com.tans.tfiletranserdesktop.net.MULTI_CONNECTIONS_FILES_TRANSFER_LISTEN_PORT
 import com.tans.tfiletranserdesktop.net.NetBufferPool

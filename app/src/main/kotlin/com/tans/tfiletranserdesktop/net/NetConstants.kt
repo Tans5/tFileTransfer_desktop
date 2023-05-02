@@ -1,6 +1,5 @@
 package com.tans.tfiletranserdesktop.net
 
-import com.tans.tfiletranserdesktop.file.FileConstants
 import com.tans.tfiletranserdesktop.utils.getCurrentOs
 import java.nio.file.Files
 import java.nio.file.Path
@@ -30,11 +29,3 @@ val commonNetBufferPool = NetBufferPool(
     poolSize = 100,
     bufferSize = NET_BUFFER_SIZE
 )
-
-val downloadDir: Path by lazy {
-    val result = Paths.get("${FileConstants.USER_HOME}${FileConstants.FILE_SEPARATOR}Downloads", "tFileTransfer")
-    if (!Files.exists(result)) {
-        Files.createDirectories(result)
-    }
-    result
-}
