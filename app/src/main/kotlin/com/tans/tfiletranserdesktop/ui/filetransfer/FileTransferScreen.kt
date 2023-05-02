@@ -31,6 +31,7 @@ import kotlinx.coroutines.rx2.await
 import java.io.File
 import java.net.InetAddress
 import java.util.concurrent.Executor
+import java.util.concurrent.atomic.AtomicBoolean
 
 enum class FileTransferTab(val tabTag: String) {
     MyFolder("MY FOLDER"),
@@ -96,8 +97,11 @@ class FileTransferScreen(
     private val remoteDeviceInfo =  remoteDevice.deviceName
 
     private val myFolderContent = MyFolderContent(fileTransferScreen = this)
+    private val isInitMyFolderContent = AtomicBoolean(false)
     private val remoteFolderContent = RemoteFolderContent(fileTransferScreen = this)
+    private val isInitRemoteFolderContent = AtomicBoolean(false)
     private val messageContent = MessageContent(fileTransferScreen = this)
+    private val isInitMessageContent = AtomicBoolean(false)
 
     private val scanDirRequest: FileExploreRequestHandler<ScanDirReq, ScanDirResp> by lazy {
         object : FileExploreRequestHandler<ScanDirReq, ScanDirResp> {
@@ -510,9 +514,24 @@ class FileTransferScreen(
                 is ConnectStatus.Connected -> {
                     Box(modifier = Modifier.fillMaxSize().padding(bottom = 56.dp), contentAlignment = Alignment.Center) {
                         when (selectedTab.value) {
-                            FileTransferTab.MyFolder -> myFolderContent.start(screenRoute)
-                            FileTransferTab.RemoteFolder -> remoteFolderContent.start(screenRoute)
-                            FileTransferTab.Message -> messageContent.start(screenRoute)
+                            FileTransferTab.MyFolder -> {
+                                if (isInitMyFolderContent.compareAndSet(false, true)) {
+                                    myFolderContent.initData()
+                                }
+                                myFolderContent.start(screenRoute)
+                            }
+                            FileTransferTab.RemoteFolder -> {
+                                if (isInitRemoteFolderContent.compareAndSet(false, true)) {
+                                    remoteFolderContent.initData()
+                                }
+                                remoteFolderContent.start(screenRoute)
+                            }
+                            FileTransferTab.Message -> {
+                                if (isInitMessageContent.compareAndSet(false, true)) {
+                                    messageContent.initData()
+                                }
+                                messageContent.start(screenRoute)
+                            }
                             else -> {}
                         }
 

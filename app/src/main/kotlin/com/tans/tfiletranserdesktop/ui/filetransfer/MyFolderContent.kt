@@ -223,7 +223,8 @@ class MyFolderContent(val fileTransferScreen: FileTransferScreen) : BaseScreen<M
     }
 
     fun back(): Boolean {
-        return if (bindState().firstOrError().blockingGet().fileTree.getOrNull()?.isRootFileTree() == false) {
+        val fileTree = bindState().firstOrError().blockingGet().fileTree.getOrNull()
+        return if (fileTree == null || fileTree.isRootFileTree()) {
             false
         } else {
             launch {

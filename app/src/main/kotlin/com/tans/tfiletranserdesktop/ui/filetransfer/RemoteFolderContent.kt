@@ -110,7 +110,8 @@ class RemoteFolderContent(val fileTransferScreen: FileTransferScreen) :
     }
 
     fun back(): Boolean {
-        return if (bindState().firstOrError().blockingGet().fileTree.getOrNull()?.isRootFileTree() == false) {
+        val fileTree = bindState().firstOrError().blockingGet().fileTree.getOrNull()
+        return if (fileTree == null || fileTree.isRootFileTree()) {
             false
         } else {
             launch {
