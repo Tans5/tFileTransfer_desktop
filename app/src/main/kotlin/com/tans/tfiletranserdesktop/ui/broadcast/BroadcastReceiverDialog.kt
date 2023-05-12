@@ -71,7 +71,7 @@ class BroadcastReceiverDialog(
             this@BroadcastReceiverDialog.receiver.set(receiver)
             runCatching {
                 withContext(Dispatchers.IO) {
-                    receiver.startReceiverSuspend(localAddress, if (currentUseOs == DesktopOs.Windows) localAddress else localAddress.getBroadcastAddress().first)
+                    receiver.startReceiverSuspend(if (currentUseOs == DesktopOs.Windows) localAddress else localAddress.getBroadcastAddress().first)
                 }
             }.onSuccess {
                 receiver.addObserver(object : BroadcastReceiverObserver {
