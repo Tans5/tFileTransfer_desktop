@@ -24,7 +24,7 @@ import com.tans.tfiletransporter.transferproto.broadcastconn.*
 import com.tans.tfiletransporter.transferproto.broadcastconn.model.RemoteDevice
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.rx2.await
+import kotlinx.coroutines.rx3.await
 import kotlinx.coroutines.withContext
 import java.net.InetAddress
 import java.util.concurrent.atomic.AtomicReference
@@ -71,7 +71,7 @@ class BroadcastReceiverDialog(
             this@BroadcastReceiverDialog.receiver.set(receiver)
             runCatching {
                 withContext(Dispatchers.IO) {
-                    receiver.startReceiverSuspend(if (currentUseOs == DesktopOs.Windows) localAddress else localAddress.getBroadcastAddress().first)
+                    receiver.startReceiverSuspend(localAddress, if (currentUseOs == DesktopOs.Windows) localAddress else localAddress.getBroadcastAddress().first)
                 }
             }.onSuccess {
                 receiver.addObserver(object : BroadcastReceiverObserver {

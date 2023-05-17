@@ -30,13 +30,10 @@ import java.io.File
 import java.io.RandomAccessFile
 import java.net.InetAddress
 import java.net.InetSocketAddress
-import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.io.path.moveTo
 
 class FileDownloader(
     val downloadDir: File,

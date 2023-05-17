@@ -30,7 +30,7 @@ import com.tans.tfiletransporter.toSizeString
 import com.tans.tfiletransporter.transferproto.fileexplore.requestSendFilesSuspend
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.rx2.await
+import kotlinx.coroutines.rx3.await
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneId

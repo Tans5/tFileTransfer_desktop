@@ -19,11 +19,12 @@ repositories {
 dependencies {
     implementation(compose.desktop.currentOs)
 
-    implementation("io.reactivex.rxjava2:rxjava:2.2.21")
-    implementation("io.reactivex.rxjava2:rxkotlin:2.4.0")
+    // RxJava3
+    implementation ("io.reactivex.rxjava3:rxjava:3.1.6")
+    implementation ("io.reactivex.rxjava3:rxkotlin:3.0.1")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-rx2:1.6.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-rx3:1.7.1")
 
     implementation("com.squareup.moshi:moshi:1.14.0")
     implementation("com.squareup.moshi:moshi-kotlin:1.14.0")

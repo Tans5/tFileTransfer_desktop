@@ -9,7 +9,7 @@ import com.tans.tfiletranserdesktop.ui.resources.defaultThemeColors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.rx2.await
+import kotlinx.coroutines.rx3.await
 
 object EmptyScreen : BaseScreen<Unit>(Unit) {
 

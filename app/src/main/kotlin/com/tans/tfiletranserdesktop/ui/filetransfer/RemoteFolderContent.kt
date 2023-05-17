@@ -19,7 +19,7 @@ import com.tans.tfiletransporter.transferproto.fileexplore.requestDownloadFilesS
 import com.tans.tfiletransporter.transferproto.fileexplore.requestScanDirSuspend
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.rx2.await
+import kotlinx.coroutines.rx3.await
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 

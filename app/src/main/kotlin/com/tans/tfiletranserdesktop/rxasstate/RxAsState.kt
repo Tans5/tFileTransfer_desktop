@@ -1,11 +1,11 @@
 package com.tans.tfiletranserdesktop.rxasstate
 
 import androidx.compose.runtime.*
-import io.reactivex.Observable
-import io.reactivex.disposables.Disposable
+import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.disposables.Disposable
 
 @Composable
-fun <R, T : R> Observable<T>.subscribeAsState(initial: R): State<R> =
+fun <R : Any, T : R> Observable<T>.subscribeAsState(initial: R): State<R> =
     asState(initial) { subscribe(it) }
 
 @Composable

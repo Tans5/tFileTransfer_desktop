@@ -27,7 +27,7 @@ import com.tans.tfiletransporter.transferproto.fileexplore.model.*
 import com.tans.tfiletransporter.transferproto.filetransfer.*
 import com.tans.tfiletransporter.transferproto.filetransfer.model.SenderFile
 import kotlinx.coroutines.*
-import kotlinx.coroutines.rx2.await
+import kotlinx.coroutines.rx3.await
 import java.io.File
 import java.net.InetAddress
 import java.util.concurrent.Executor

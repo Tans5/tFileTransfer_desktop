@@ -19,7 +19,7 @@ import com.tans.tfiletranserdesktop.ui.filetransfer.FileTransferScreen
 import com.tans.tfiletranserdesktop.ui.resources.*
 import com.tans.tfiletransporter.netty.findLocalAddressV4
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.rx2.await
+import kotlinx.coroutines.rx3.await
 import java.net.InetAddress
 import java.util.*
 
