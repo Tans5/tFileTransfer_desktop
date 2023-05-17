@@ -102,54 +102,30 @@ class BroadcastScreen : BaseScreen<BroadcastState>(BroadcastState()) {
                             }
                         }
 
-//                        Row {
-//                            Text(text = stringBroadcastUseSystemBroadcast, style = TextStyle(color = colorTextGray, fontSize = 14.sp, fontWeight = FontWeight.Bold),
-//                                modifier = Modifier.align(Alignment.CenterVertically))
-//                            Spacer(Modifier.width(5.dp))
-//                            val useSystemBroadcast = bindState().map { it.useSystemBroadcast }.distinctUntilChanged().subscribeAsState(false)
-//                            Switch(
-//                                checked = useSystemBroadcast.value,
-//                                onCheckedChange = {
-//                                    launch {
-//                                        updateState { oldState ->
-//                                            oldState.copy(useSystemBroadcast = !useSystemBroadcast.value)
-//                                        }.await()
-//                                    }
-//                                },
-//                                colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colors.primary),
-//                            )
-//                        }
-
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        OutlinedButton(
-                            onClick = {
-                                launch {
-                                    updateState { oldState ->
-                                        oldState.copy(dialogEvent = BroadcastDialogEvent.ReceiverDialog(time = System.currentTimeMillis()))
-                                    }.await()
-                                }
-                            },
-                            modifier = Modifier.align(alignment = Alignment.CenterHorizontally).width(450.dp).height(55.dp),
-                            border = BorderStroke(ButtonDefaults.OutlinedBorderSize, colorTeal200)
-                        ) {
-                            Text(text = stringBroadcastAsReceiver)
+                        actionButton(scope = this, text = stringLocalNetworkShowQRCode) {
+
                         }
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        OutlinedButton(
-                            onClick = {
-                                launch {
-                                    updateState { oldState ->
-                                        oldState.copy(dialogEvent = BroadcastDialogEvent.SenderDialog(time = System.currentTimeMillis()))
-                                    }.await()
-                                }
-                            },
-                            modifier = Modifier.align(alignment = Alignment.CenterHorizontally).width(450.dp).height(55.dp),
-                            border = BorderStroke(ButtonDefaults.OutlinedBorderSize, colorTeal200)
-                        ) {
-                            Text(text = stringBroadcastAsSender)
+                        actionButton(scope = this, text = stringBroadcastAsReceiver) {
+                            launch {
+                                updateState { oldState ->
+                                    oldState.copy(dialogEvent = BroadcastDialogEvent.ReceiverDialog(time = System.currentTimeMillis()))
+                                }.await()
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        actionButton(scope = this, text = stringBroadcastAsSender) {
+                            launch {
+                                updateState { oldState ->
+                                    oldState.copy(dialogEvent = BroadcastDialogEvent.SenderDialog(time = System.currentTimeMillis()))
+                                }.await()
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(10.dp))
@@ -210,6 +186,15 @@ class BroadcastScreen : BaseScreen<BroadcastState>(BroadcastState()) {
                 }
             }
         }
+    }
+
+    @Composable
+    private fun actionButton(scope: ColumnScope, text: String, onClick: () -> Unit) =  OutlinedButton(
+        onClick = onClick,
+        modifier = with(scope) { Modifier.align(alignment = Alignment.CenterHorizontally).width(450.dp).height(55.dp) },
+        border = BorderStroke(ButtonDefaults.OutlinedBorderSize, colorTeal200)
+    ) {
+        Text(text = text)
     }
 
 }

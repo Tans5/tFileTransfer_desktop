@@ -14,6 +14,7 @@ repositories {
     mavenCentral()
     google()
     maven { url = uri("https://maven.pkg.jetbrains.space/public/p/compose/dev") }
+    maven { url = uri("https://www.jitpack.io") }
 }
 
 dependencies {
@@ -32,6 +33,9 @@ dependencies {
     kapt("com.squareup.moshi:moshi-kotlin-codegen:1.14.0")
 
     implementation("io.netty:netty-all:4.1.86.Final")
+
+    // QRCode Gen
+    implementation("com.github.kenglxn.QRGen:javase:3.0.1")
 
     implementation(project(":net"))
 }
