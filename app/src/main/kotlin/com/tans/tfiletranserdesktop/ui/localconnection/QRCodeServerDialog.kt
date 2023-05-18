@@ -8,8 +8,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
-import androidx.compose.ui.graphics.toComposeImageBitmap
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.toPainter
 import androidx.compose.ui.unit.dp
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.client.j2se.MatrixToImageWriter
+import com.google.zxing.qrcode.QRCodeWriter
 import com.tans.tfiletranserdesktop.logs.JvmLog
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.dialogs.BaseStatableDialog
@@ -27,9 +31,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx3.await
-import net.glxn.qrgen.core.image.ImageType
-import net.glxn.qrgen.javase.QRCode
 import java.net.InetAddress
+import java.util.Optional
+import kotlin.jvm.optionals.getOrNull
 
 @Composable
 fun showQRCodeServerDialog(
@@ -84,15 +88,20 @@ class QRCodeServerDialog(
                         deviceName = localDeviceInfo,
                         address = localAddress.toInt()
                     ).toJson()!!
-                    QRCode.from(qrcodeContent)
-                        .withSize(320, 320)
-                        .to(ImageType.PNG)
-                        .stream()
-                        .toByteArray()
+                    val qrCodeWriter = QRCodeWriter()
+                    val matrix = qrCodeWriter.encode(qrcodeContent, BarcodeFormat.QR_CODE, 320, 320)
+                    val bufferedImage = MatrixToImageWriter.toBufferedImage(matrix)
+                    bufferedImage.toPainter()
                 }.onSuccess {
-                    updateState { state -> state.copy(qrcodeImages = it) }.await()
+                    updateState { state -> state.copy(qrcodePainter = Optional.of(it)) }.await()
                 }.onFailure {
-                    JvmLog.e(TAG, "Create qrcode fail: ${it.message}", it)
+                    val ss = it.stackTrace
+                    val stringBuilder = StringBuilder()
+                    for (s in ss) {
+                        stringBuilder.appendLine(s.toString())
+                    }
+                    val eMsg = "Create qrcode fail: ${it.message} \n" + stringBuilder.toString()
+                    JvmLog.e(TAG, eMsg, it)
                     cancel()
                 }
             }.onFailure {
@@ -105,21 +114,13 @@ class QRCodeServerDialog(
 
     @Composable
     override fun DialogContent() {
-        val imageByteArray = bindState().map { it.qrcodeImages }.subscribeAsState(byteArrayOf()).value
+        val painter = bindState().map { it.qrcodePainter }.subscribeAsState(Optional.empty()).value.getOrNull()
         Column(modifier = Modifier.fillMaxWidth().wrapContentHeight()) {
-            if (imageByteArray .isNotEmpty()) {
-                Image(
-                    bitmap = org.jetbrains.skia.Image.makeFromEncoded(imageByteArray).toComposeImageBitmap(),
-                    modifier = Modifier.fillMaxWidth().aspectRatio(1f).padding(20.dp),
-                    contentDescription = null
-                )
-            } else {
-                Image(
-                    painter = ColorPainter(Color.White),
-                    modifier = Modifier.fillMaxWidth().aspectRatio(1f),
-                    contentDescription = null,
-                )
-            }
+            Image(
+                painter = painter ?: ColorPainter(Color.White),
+                modifier = Modifier.fillMaxWidth().aspectRatio(1f).padding(20.dp),
+                contentDescription = null
+            )
             Spacer(Modifier.height(2.dp))
             Row(modifier = Modifier.fillMaxWidth()) {
                 Spacer(modifier = Modifier.weight(1f))
@@ -144,20 +145,7 @@ class QRCodeServerDialog(
         private const val TAG = "QRCodeServerDialog"
 
         data class QRCodeServerState(
-            val qrcodeImages: ByteArray = byteArrayOf()
-        ) {
-            override fun equals(other: Any?): Boolean {
-                if (this === other) return true
-                if (javaClass != other?.javaClass) return false
-
-                other as QRCodeServerState
-
-                return qrcodeImages.contentEquals(other.qrcodeImages)
-            }
-
-            override fun hashCode(): Int {
-                return qrcodeImages.contentHashCode()
-            }
-        }
+            val qrcodePainter: Optional<Painter> = Optional.empty(),
+        )
     }
 }

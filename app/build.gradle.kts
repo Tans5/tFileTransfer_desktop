@@ -35,7 +35,7 @@ dependencies {
     implementation("io.netty:netty-all:4.1.86.Final")
 
     // QRCode Gen
-    implementation("com.github.kenglxn.QRGen:javase:3.0.1")
+    implementation("com.google.zxing:javase:3.3.0")
 
     implementation(project(":net"))
 }
