@@ -1,4 +1,4 @@
-package com.tans.tfiletranserdesktop.ui.broadcast
+package com.tans.tfiletranserdesktop.ui.localconnection
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
@@ -23,20 +23,20 @@ import kotlinx.coroutines.rx3.await
 import java.net.InetAddress
 import java.util.*
 
-sealed class BroadcastDialogEvent(val time: Long) {
-    class ReceiverDialog(time: Long) : BroadcastDialogEvent(time)
-    class SenderDialog(time: Long) : BroadcastDialogEvent(time)
-    class None(time: Long) : BroadcastDialogEvent(time)
+sealed class LocalConnectionDialogEvent(val time: Long) {
+    class BroadcastReceiverDialog(time: Long) : LocalConnectionDialogEvent(time)
+    class BroadcastSenderDialog(time: Long) : LocalConnectionDialogEvent(time)
+    class None(time: Long) : LocalConnectionDialogEvent(time)
 }
 
-data class BroadcastState(
+data class LocalConnectionState(
     val addresses: List<InetAddress> = emptyList(),
     val selectAddressIndex: Optional<Int> = Optional.empty<Int>(),
     val localDeviceInfo: String = "",
-    val dialogEvent: BroadcastDialogEvent = BroadcastDialogEvent.None(System.currentTimeMillis())
+    val dialogEvent: LocalConnectionDialogEvent = LocalConnectionDialogEvent.None(System.currentTimeMillis())
 )
 
-class BroadcastScreen : BaseScreen<BroadcastState>(BroadcastState()) {
+class LocalConnectionScreen : BaseScreen<LocalConnectionState>(LocalConnectionState()) {
 
     override fun initData() {
         launch {
@@ -77,14 +77,14 @@ class BroadcastScreen : BaseScreen<BroadcastState>(BroadcastState()) {
                     Column(
                         modifier = Modifier.fillMaxWidth().padding(18.dp)
                     ) {
-                        Text(text = stringBroadcastTitle, style = TextStyle(color = colorTextBlack, fontSize = 16.sp, fontWeight = FontWeight.W400))
+                        Text(text = stringLocalConnectionTitle, style = TextStyle(color = colorTextBlack, fontSize = 16.sp, fontWeight = FontWeight.W400))
                         Spacer(Modifier.height(5.dp))
-                        Text(text = stringBroadcastTips, style = TextStyle(color = colorTextGray, fontSize = 14.sp))
+                        Text(text = stringLocalConnectionTips, style = TextStyle(color = colorTextGray, fontSize = 14.sp))
                         Spacer(Modifier.height(5.dp))
                         val deviceInfo = bindState().map { it.localDeviceInfo }.distinctUntilChanged().subscribeAsState("")
-                        Text(text = "$stringBroadcastLocalDevice ${deviceInfo.value}", style = TextStyle(color = colorTextGray, fontSize = 14.sp, fontWeight = FontWeight.Bold))
+                        Text(text = "$stringLocalConnectionLocalDevice ${deviceInfo.value}", style = TextStyle(color = colorTextGray, fontSize = 14.sp, fontWeight = FontWeight.Bold))
                         Spacer(Modifier.height(5.dp))
-                        Text(text = stringBroadcastLocalAddress, style = TextStyle(color = colorTextGray, fontSize = 14.sp, fontWeight = FontWeight.Bold))
+                        Text(text = stringLocalConnectionLocalAddress, style = TextStyle(color = colorTextGray, fontSize = 14.sp, fontWeight = FontWeight.Bold))
                         Spacer(Modifier.height(3.dp))
                         val addresses = bindState().map { it.addresses }.distinctUntilChanged().subscribeAsState(emptyList())
                         val selectedIndex = bindState().map { it.selectAddressIndex }.distinctUntilChanged().subscribeAsState(Optional.empty())
@@ -104,26 +104,26 @@ class BroadcastScreen : BaseScreen<BroadcastState>(BroadcastState()) {
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        actionButton(scope = this, text = stringLocalNetworkShowQRCode) {
+                        actionButton(scope = this, text = stringLocalConnectionShowQRCode) {
 
                         }
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        actionButton(scope = this, text = stringBroadcastAsReceiver) {
+                        actionButton(scope = this, text = stringLocalConnectionAsReceiver) {
                             launch {
                                 updateState { oldState ->
-                                    oldState.copy(dialogEvent = BroadcastDialogEvent.ReceiverDialog(time = System.currentTimeMillis()))
+                                    oldState.copy(dialogEvent = LocalConnectionDialogEvent.BroadcastReceiverDialog(time = System.currentTimeMillis()))
                                 }.await()
                             }
                         }
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        actionButton(scope = this, text = stringBroadcastAsSender) {
+                        actionButton(scope = this, text = stringLocalConnectionAsSender) {
                             launch {
                                 updateState { oldState ->
-                                    oldState.copy(dialogEvent = BroadcastDialogEvent.SenderDialog(time = System.currentTimeMillis()))
+                                    oldState.copy(dialogEvent = LocalConnectionDialogEvent.BroadcastSenderDialog(time = System.currentTimeMillis()))
                                 }.await()
                             }
                         }
@@ -147,7 +147,7 @@ class BroadcastScreen : BaseScreen<BroadcastState>(BroadcastState()) {
                     val state = dialogEvent.value.get()
                     val selectAddress = state.addresses[state.selectAddressIndex.get()]
                     when (state.dialogEvent) {
-                        is BroadcastDialogEvent.ReceiverDialog -> showBroadcastReceiverDialog(
+                        is LocalConnectionDialogEvent.BroadcastReceiverDialog -> showBroadcastReceiverDialog(
                             localAddress = selectAddress,
                             localDeviceInfo = state.localDeviceInfo,
                             connectTo = { remoteDevice ->
@@ -160,11 +160,11 @@ class BroadcastScreen : BaseScreen<BroadcastState>(BroadcastState()) {
                                 )
                             }) {
                             launch {
-                                updateState { oldState -> oldState.copy(dialogEvent = BroadcastDialogEvent.None(System.currentTimeMillis())) }.await()
+                                updateState { oldState -> oldState.copy(dialogEvent = LocalConnectionDialogEvent.None(System.currentTimeMillis())) }.await()
                             }
                         }
 
-                        is BroadcastDialogEvent.SenderDialog -> showBroadcastSenderDialog(
+                        is LocalConnectionDialogEvent.BroadcastSenderDialog -> showBroadcastSenderDialog(
                             localAddress = selectAddress,
                             broadMessage = state.localDeviceInfo,
                             receiveConnect = { remoteDevice ->
@@ -177,11 +177,11 @@ class BroadcastScreen : BaseScreen<BroadcastState>(BroadcastState()) {
                                 )
                             }) {
                             launch {
-                                updateState { oldState -> oldState.copy(dialogEvent = BroadcastDialogEvent.None(System.currentTimeMillis())) }.await()
+                                updateState { oldState -> oldState.copy(dialogEvent = LocalConnectionDialogEvent.None(System.currentTimeMillis())) }.await()
                             }
                         }
 
-                        is BroadcastDialogEvent.None -> {  }
+                        is LocalConnectionDialogEvent.None -> {  }
                     }
                 }
             }

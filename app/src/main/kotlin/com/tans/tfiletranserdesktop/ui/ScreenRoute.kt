@@ -4,7 +4,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import com.tans.tfiletranserdesktop.core.Stateable
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
-import com.tans.tfiletranserdesktop.ui.broadcast.BroadcastScreen
+import com.tans.tfiletranserdesktop.ui.localconnection.LocalConnectionScreen
 import com.tans.tfiletranserdesktop.ui.resources.defaultThemeColors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +22,7 @@ object EmptyScreen : BaseScreen<Unit>(Unit) {
 fun startDefaultScreenRoute() {
     val screenRoute = ScreenRoute()
     screenRoute.start()
-    screenRoute.routeTo(BroadcastScreen())
+    screenRoute.routeTo(LocalConnectionScreen())
 }
 
 class ScreenRoute : Stateable<List<BaseScreen<*>>> by Stateable(emptyList()), CoroutineScope by CoroutineScope(Dispatchers.Default) {

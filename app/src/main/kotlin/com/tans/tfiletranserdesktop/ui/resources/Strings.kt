@@ -3,13 +3,13 @@ package com.tans.tfiletranserdesktop.ui.resources
 const val stringAppName = "tFileTransfer"
 
 // Broadcast
-const val stringBroadcastTitle = "Connect Remote Device by Broadcast"
-const val stringBroadcastTips = "Use UDP broadcast to connect target device, your device must be in the same network with target device. "
-const val stringBroadcastLocalDevice = "Local Device:"
-const val stringBroadcastLocalAddress = "Local IP Address:"
-const val stringLocalNetworkShowQRCode = "Show QR Code"
-const val stringBroadcastAsReceiver = "Search Servers"
-const val stringBroadcastAsSender = "As Server"
+const val stringLocalConnectionTitle = "Connect Remote Device via LocalNetwork"
+const val stringLocalConnectionTips = "If two devices in the same local network, you can use this way create connection. \n Use QR code scan or UDP broadcast."
+const val stringLocalConnectionLocalDevice = "Local Device:"
+const val stringLocalConnectionLocalAddress = "Local IP Address:"
+const val stringLocalConnectionShowQRCode = "Show QR Code"
+const val stringLocalConnectionAsReceiver = "Search Servers"
+const val stringLocalConnectionAsSender = "As Server"
 
 // Broadcast Sender Dialog
 const val stringBroadcastSenderDialogTitle = "Waiting connect..."

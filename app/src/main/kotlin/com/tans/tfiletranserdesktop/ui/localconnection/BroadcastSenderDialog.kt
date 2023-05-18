@@ -1,4 +1,4 @@
-package com.tans.tfiletranserdesktop.ui.broadcast
+package com.tans.tfiletranserdesktop.ui.localconnection
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.CircularProgressIndicator
