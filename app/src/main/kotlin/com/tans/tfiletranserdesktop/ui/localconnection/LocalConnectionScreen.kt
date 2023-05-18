@@ -24,6 +24,8 @@ import java.net.InetAddress
 import java.util.*
 
 sealed class LocalConnectionDialogEvent(val time: Long) {
+    class QRCodeServerDialog(time: Long) : LocalConnectionDialogEvent(time)
+
     class BroadcastReceiverDialog(time: Long) : LocalConnectionDialogEvent(time)
     class BroadcastSenderDialog(time: Long) : LocalConnectionDialogEvent(time)
     class None(time: Long) : LocalConnectionDialogEvent(time)
@@ -147,6 +149,10 @@ class LocalConnectionScreen : BaseScreen<LocalConnectionState>(LocalConnectionSt
                     val state = dialogEvent.value.get()
                     val selectAddress = state.addresses[state.selectAddressIndex.get()]
                     when (state.dialogEvent) {
+                        is LocalConnectionDialogEvent.QRCodeServerDialog -> {
+
+                        }
+
                         is LocalConnectionDialogEvent.BroadcastReceiverDialog -> showBroadcastReceiverDialog(
                             localAddress = selectAddress,
                             localDeviceInfo = state.localDeviceInfo,
