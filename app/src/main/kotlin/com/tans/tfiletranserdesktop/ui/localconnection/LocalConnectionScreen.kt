@@ -107,7 +107,11 @@ class LocalConnectionScreen : BaseScreen<LocalConnectionState>(LocalConnectionSt
                         Spacer(modifier = Modifier.height(20.dp))
 
                         actionButton(scope = this, text = stringLocalConnectionShowQRCode) {
-
+                            launch {
+                                updateState { oldState ->
+                                    oldState.copy(dialogEvent = LocalConnectionDialogEvent.QRCodeServerDialog(time = System.currentTimeMillis()))
+                                }.await()
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(20.dp))
@@ -149,8 +153,21 @@ class LocalConnectionScreen : BaseScreen<LocalConnectionState>(LocalConnectionSt
                     val state = dialogEvent.value.get()
                     val selectAddress = state.addresses[state.selectAddressIndex.get()]
                     when (state.dialogEvent) {
-                        is LocalConnectionDialogEvent.QRCodeServerDialog -> {
-
+                        is LocalConnectionDialogEvent.QRCodeServerDialog -> showQRCodeServerDialog(
+                            localAddress = selectAddress,
+                            localDeviceInfo = state.localDeviceInfo,
+                            requestTransferFile = { remoteDevice ->
+                                screenRoute.routeTo(
+                                    FileTransferScreen(
+                                        localAddress = selectAddress,
+                                        remoteDevice = remoteDevice,
+                                        asServer = true
+                                    )
+                                )
+                            }) {
+                            launch {
+                                updateState { oldState -> oldState.copy(dialogEvent = LocalConnectionDialogEvent.None(System.currentTimeMillis())) }.await()
+                            }
                         }
 
                         is LocalConnectionDialogEvent.BroadcastReceiverDialog -> showBroadcastReceiverDialog(

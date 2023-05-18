@@ -1,8 +1,19 @@
 package com.tans.tfiletranserdesktop.ui.localconnection
 
-import com.tans.tfiletranserdesktop.file.LOCAL_DEVICE
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.Text
+import androidx.compose.material.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.graphics.toComposeImageBitmap
+import androidx.compose.ui.unit.dp
 import com.tans.tfiletranserdesktop.logs.JvmLog
+import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.dialogs.BaseStatableDialog
+import com.tans.tfiletranserdesktop.ui.resources.stringBroadcastSenderDialogCancel
 import com.tans.tfiletranserdesktop.utils.toJson
 import com.tans.tfiletransporter.netty.toInt
 import com.tans.tfiletransporter.transferproto.TransferProtoConstant
@@ -20,8 +31,25 @@ import net.glxn.qrgen.core.image.ImageType
 import net.glxn.qrgen.javase.QRCode
 import java.net.InetAddress
 
+@Composable
+fun showQRCodeServerDialog(
+    localAddress: InetAddress,
+    localDeviceInfo: String,
+    requestTransferFile: (remoteDevice: RemoteDevice) -> Unit,
+    cancelRequest: () -> Unit) {
+    val d = QRCodeServerDialog(
+        localAddress,
+        localDeviceInfo,
+        requestTransferFile,
+        cancelRequest
+    )
+    d.initData()
+    d.start()
+}
+
 class QRCodeServerDialog(
     private val localAddress: InetAddress,
+    private val localDeviceInfo: String,
     private val requestTransferFile: (remoteDevice: RemoteDevice) -> Unit,
     cancelRequest: () -> Unit
 ) : BaseStatableDialog<QRCodeServerDialog.Companion.QRCodeServerState>(
@@ -53,7 +81,7 @@ class QRCodeServerDialog(
                 runCatching {
                     val qrcodeContent = QRCodeShare(
                         version = TransferProtoConstant.VERSION,
-                        deviceName = LOCAL_DEVICE,
+                        deviceName = localDeviceInfo,
                         address = localAddress.toInt()
                     ).toJson()!!
                     QRCode.from(qrcodeContent)
@@ -74,8 +102,34 @@ class QRCodeServerDialog(
             }
         }
     }
-    override fun DialogContent() {
 
+    @Composable
+    override fun DialogContent() {
+        val imageByteArray = bindState().map { it.qrcodeImages }.subscribeAsState(byteArrayOf()).value
+        Column(modifier = Modifier.fillMaxWidth().wrapContentHeight()) {
+            if (imageByteArray .isNotEmpty()) {
+                Image(
+                    bitmap = org.jetbrains.skia.Image.makeFromEncoded(imageByteArray).toComposeImageBitmap(),
+                    modifier = Modifier.fillMaxWidth().aspectRatio(1f).padding(20.dp),
+                    contentDescription = null
+                )
+            } else {
+                Image(
+                    painter = ColorPainter(Color.White),
+                    modifier = Modifier.fillMaxWidth().aspectRatio(1f),
+                    contentDescription = null,
+                )
+            }
+            Spacer(Modifier.height(2.dp))
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Spacer(modifier = Modifier.weight(1f))
+                TextButton(
+                    onClick = { cancel() }
+                ) {
+                    Text(stringBroadcastSenderDialogCancel)
+                }
+            }
+        }
     }
 
     override fun stop() {
