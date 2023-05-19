@@ -1,5 +1,12 @@
+[中文](./README-zh.md)
+
 ## Summary
-File transfer tools built with Compose Desktop. It could transfer files to device that in the same network.  
+File transfer tools built with [Compose for Desktop](https://github.com/JetBrains/compose-multiplatform). It could send/receive files to/from other devices via LocalNetwork. This tools support Windows，Linux and MacOS.  
+
+Create connections ways:
+- Show QR Code (LocalNetwork Limit)
+- UDP Broadcast (LocalNetwork Limit)
+
 [Android Version](https://github.com/Tans5/tFileTransporter)
 
 
