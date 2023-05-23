@@ -106,7 +106,7 @@ class FileTransferScreen(
     private val scanDirRequest: FileExploreRequestHandler<ScanDirReq, ScanDirResp> by lazy {
         object : FileExploreRequestHandler<ScanDirReq, ScanDirResp> {
             override fun onRequest(isNew: Boolean, request: ScanDirReq): ScanDirResp {
-                return request.scanChildren(rootDir = userHomeDir)
+                return request.scanChildren()
             }
         }
     }
@@ -235,7 +235,7 @@ class FileTransferScreen(
     fun sendFiles(files: List<FileExploreFile>, bufferSize: Long) {
         launch(Dispatchers.IO) {
             val fixedFiles = files.filter { it.size > 0 }
-            val senderFiles = fixedFiles.map { SenderFile( File(userHomeDir, it.path), it) }
+            val senderFiles = fixedFiles.map { SenderFile( File(it.path), it) }
             if (senderFiles.isEmpty()) return@launch
             val sender = FileSender(
                 files = senderFiles,
