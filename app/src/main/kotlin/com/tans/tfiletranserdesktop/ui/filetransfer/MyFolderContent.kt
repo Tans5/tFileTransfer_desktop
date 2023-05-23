@@ -153,7 +153,7 @@ class MyFolderContent(val fileTransferScreen: FileTransferScreen) : BaseScreen<M
     override fun initData() {
         launch {
             updateState {
-                MyFolderContentState(fileTree = Optional.of(createLocalRootTree(userHomeDir)))
+                MyFolderContentState(fileTree = Optional.of(createLocalRootTree()))
             }.await()
         }
     }
@@ -186,7 +186,7 @@ class MyFolderContent(val fileTransferScreen: FileTransferScreen) : BaseScreen<M
                                         }
 
                                         is FileLeaf.DirectoryFileLeaf -> {
-                                            oldState.copy(fileTree = Optional.of(tree.newLocalSubTree(fileOrDir, userHomeDir)), selectedFiles = emptySet())
+                                            oldState.copy(fileTree = Optional.of(tree.newLocalSubTree(fileOrDir)), selectedFiles = emptySet())
                                         }
                                     }
                                 }.await()
@@ -247,7 +247,7 @@ class MyFolderContent(val fileTransferScreen: FileTransferScreen) : BaseScreen<M
                 val oldTree = oldState.fileTree.getOrNull()
                 if (oldTree == null || oldTree.isRootFileTree()) {
                     oldState.copy(
-                        fileTree = Optional.of(createLocalRootTree(userHomeDir)),
+                        fileTree = Optional.of(createLocalRootTree()),
                         selectedFiles = emptySet()
                     )
                 } else {
@@ -255,7 +255,7 @@ class MyFolderContent(val fileTransferScreen: FileTransferScreen) : BaseScreen<M
                     val dirLeaf = parentTree?.dirLeafs?.find { it.path == oldTree.path }
                     if (parentTree != null && dirLeaf != null) {
                         oldState.copy(
-                            fileTree = Optional.of(parentTree.newLocalSubTree(dirLeaf, userHomeDir)),
+                            fileTree = Optional.of(parentTree.newLocalSubTree(dirLeaf)),
                             selectedFiles = emptySet()
                         )
                     } else {
