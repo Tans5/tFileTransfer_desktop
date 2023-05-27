@@ -209,7 +209,7 @@ class MyFolderContent(val fileTransferScreen: FileTransferScreen) : BaseScreen<M
                                 updateState { oldState ->
                                     oldState.copy(selectedFiles = emptySet())
                                 }.await()
-                                fileTransferScreen.sendFiles(files = exploreFiles, bufferSize = it.bufferSize.toLong())
+                                fileTransferScreen.sendFiles(files = exploreFiles)
                             }.onFailure {
                                 JvmLog.e(TAG, "Request send msg error: ${it.message}", it)
                             }

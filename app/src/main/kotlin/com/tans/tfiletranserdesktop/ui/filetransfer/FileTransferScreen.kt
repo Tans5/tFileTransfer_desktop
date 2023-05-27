@@ -126,7 +126,7 @@ class FileTransferScreen(
         object : FileExploreRequestHandler<DownloadFilesReq, DownloadFilesResp> {
             override fun onRequest(isNew: Boolean, request: DownloadFilesReq): DownloadFilesResp {
                 if (isNew) {
-                    sendFiles(files = request.downloadFiles, bufferSize = request.bufferSize.toLong())
+                    sendFiles(files = request.downloadFiles)
                 }
                 return DownloadFilesResp(maxConnection = FILE_TRANSFER_MAX_CONNECTION)
             }
@@ -232,7 +232,7 @@ class FileTransferScreen(
         }
     }
 
-    fun sendFiles(files: List<FileExploreFile>, bufferSize: Long) {
+    fun sendFiles(files: List<FileExploreFile>) {
         launch(Dispatchers.IO) {
             val fixedFiles = files.filter { it.size > 0 }
             val senderFiles = fixedFiles.map { SenderFile( File(it.path), it) }
@@ -240,7 +240,6 @@ class FileTransferScreen(
             val sender = FileSender(
                 files = senderFiles,
                 bindAddress = localAddress,
-                bufferSize = bufferSize,
                 log = JvmLog
             )
             updateState {
