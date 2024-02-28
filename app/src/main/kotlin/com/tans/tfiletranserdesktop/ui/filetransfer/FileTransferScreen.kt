@@ -1,5 +1,6 @@
 package com.tans.tfiletranserdesktop.ui.filetransfer
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -28,6 +30,8 @@ import com.tans.tfiletransporter.transferproto.filetransfer.*
 import com.tans.tfiletransporter.transferproto.filetransfer.model.SenderFile
 import kotlinx.coroutines.*
 import kotlinx.coroutines.rx3.await
+import java.awt.datatransfer.DataFlavor
+import java.awt.dnd.*
 import java.io.File
 import java.net.InetAddress
 import java.util.concurrent.Executor
@@ -41,9 +45,9 @@ enum class FileTransferTab(val tabTag: String) {
 
 sealed class ConnectStatus {
     data class Connected(val handshake: Handshake) : ConnectStatus()
-    object Connecting : ConnectStatus()
+    data object Connecting : ConnectStatus()
 
-    object Closed : ConnectStatus()
+    data object Closed : ConnectStatus()
 
     data class Error(val title: String, val msg: String) : ConnectStatus()
 }
@@ -71,7 +75,8 @@ sealed class FileTransferDialog {
 
     data class Error(val msg: String) : FileTransferDialog()
 
-    object None : FileTransferDialog()
+    data object DragFiles : FileTransferDialog()
+    data object None : FileTransferDialog()
 }
 
 data class Message(
@@ -126,7 +131,7 @@ class FileTransferScreen(
         object : FileExploreRequestHandler<DownloadFilesReq, DownloadFilesResp> {
             override fun onRequest(isNew: Boolean, request: DownloadFilesReq): DownloadFilesResp {
                 if (isNew) {
-                    sendFiles(files = request.downloadFiles)
+                    sendFilesWithoutRequest(files = request.downloadFiles)
                 }
                 return DownloadFilesResp(maxConnection = FILE_TRANSFER_MAX_CONNECTION)
             }
@@ -164,6 +169,65 @@ class FileTransferScreen(
 
     private val ioExecutor: Executor by lazy {
         Dispatchers.IO.asExecutor()
+    }
+
+    private val dropTarget: DropTarget by lazy {
+        object : DropTarget() {
+
+            override fun dragEnter(dtde: DropTargetDragEvent) {
+                try {
+                    dtde.acceptDrag(DnDConstants.ACTION_REFERENCE)
+                    launch(Dispatchers.IO) {
+                        val state = stateStore.firstOrError().await()
+                        if (state.connectStatus is ConnectStatus.Connected) {
+                            val showingDialog = state.showDialog
+                            if (showingDialog == FileTransferDialog.None) {
+                                updateState {
+                                    it.copy(showDialog = FileTransferDialog.DragFiles)
+                                }.await()
+                            }
+                        }
+                    }
+                } catch (e: Throwable) {
+                    JvmLog.e(TAG, "Drag files enter error.", e)
+                }
+            }
+
+            override fun dragExit(dte: DropTargetEvent?) {
+                try {
+                    launch(Dispatchers.IO) {
+                        val state = stateStore.firstOrError().await()
+                        if (state.showDialog == FileTransferDialog.DragFiles) {
+                            updateState { it.copy(showDialog = FileTransferDialog.None) }.await()
+                        }
+                    }
+                } catch (e: Throwable) {
+                    JvmLog.e(TAG, "Drag files exit error.", e)
+                }
+            }
+
+            override fun drop(dtde: DropTargetDropEvent) {
+                    try {
+                        dtde.acceptDrop(DnDConstants.ACTION_REFERENCE)
+                        val files = dtde.transferable.getTransferData(DataFlavor.javaFileListFlavor) as List<File>
+                        for (f in files) {
+                            JvmLog.d(TAG, "Get drop file: ${f.absoluteFile.canonicalPath}")
+                        }
+                        launch(Dispatchers.IO) {
+                            val state = stateStore.firstOrError().await()
+                            if (state.connectStatus is ConnectStatus.Connected) {
+                                val showingDialog = state.showDialog
+                                if (showingDialog == FileTransferDialog.DragFiles) {
+                                    sendJvmFilesWithRequest(files)
+                                }
+                            }
+                        }
+
+                    } catch (e: Throwable) {
+                        JvmLog.e(TAG, "Drop files error.", e)
+                    }
+            }
+        }
     }
 
     override fun initData() {
@@ -232,11 +296,45 @@ class FileTransferScreen(
         }
     }
 
-    fun sendFiles(files: List<FileExploreFile>) {
+
+    fun sendJvmFilesWithRequest(files: List<File>) {
+
+        launch(Dispatchers.IO) {
+            val exploreFiles = files.jvmFilesToExploreFiles().filter { it.size > 0L }
+            if (exploreFiles.isNotEmpty()) {
+                sendFilesWithRequest(exploreFiles)
+            } else {
+                updateState {
+                    it.copy(showDialog = FileTransferDialog.None)
+                }.await()
+            }
+        }
+    }
+
+    fun sendLeafFilesWithRequest(files: List<FileLeaf.CommonFileLeaf>) {
+        sendFilesWithRequest(files.leafToExploreFiles().filter { it.size > 0L })
+    }
+
+    private fun sendFilesWithRequest(files: List<FileExploreFile>) {
+        launch(Dispatchers.IO) {
+            if (files.isNotEmpty()) {
+                runCatching {
+                    fileExplore
+                        .requestSendFilesSuspend(files)
+                }.onSuccess {
+                    sendFilesWithoutRequest(files)
+                }.onFailure {
+                    JvmLog.e(TAG, "Request send msg error: ${it.message}", it)
+                }
+            }
+        }
+    }
+
+    private fun sendFilesWithoutRequest(files: List<FileExploreFile>) {
         launch(Dispatchers.IO) {
             val fixedFiles = files.filter { it.size > 0 }
             val senderFiles = fixedFiles.map { SenderFile( File(it.path), it) }
-            if (senderFiles.isEmpty()) return@launch
+            if (senderFiles.isEmpty()) { return@launch }
             val sender = FileSender(
                 files = senderFiles,
                 bindAddress = localAddress,
@@ -396,6 +494,7 @@ class FileTransferScreen(
 
     @Composable
     override fun start(screenRoute: ScreenRoute) {
+        screenRoute.frameWindowScope.window.dropTarget = dropTarget
         val selectedTab = bindState().map { it.selectedTab }.distinctUntilChanged().subscribeAsState(FileTransferTab.MyFolder)
         val connectStatus = bindState().map { it.connectStatus }.distinctUntilChanged().subscribeAsState(ConnectStatus.Connecting)
         Scaffold(
@@ -428,7 +527,6 @@ class FileTransferScreen(
                                             screenRoute.back()
                                         }
                                     }
-                                    else -> {}
                                 }
                             }
                         }) {
@@ -527,14 +625,15 @@ class FileTransferScreen(
                                 }
                                 messageContent.start(screenRoute)
                             }
-                            else -> {}
                         }
 
                         val dialogType = bindState().map { it.showDialog }.distinctUntilChanged().subscribeAsState(FileTransferDialog.None)
                         when (val dialog = dialogType.value) {
                             is FileTransferDialog.SendingFiles -> FileTransferDialog(dialog)
                             is FileTransferDialog.DownloadFiles -> FileTransferDialog(dialog)
-                            else -> {}
+                            FileTransferDialog.DragFiles -> DragFilesDialog()
+                            is FileTransferDialog.Error -> {}
+                            FileTransferDialog.None -> {}
                         }
                     }
                 }
@@ -547,7 +646,7 @@ class FileTransferScreen(
     @Composable
     fun FileTransferDialog(dialog: FileTransferDialog) {
         if (dialog is FileTransferDialog.DownloadFiles || dialog is FileTransferDialog.SendingFiles) {
-            Box(modifier = Modifier.fillMaxSize().clickable { }, contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier.fillMaxSize().background(color = Color(0.2f, 0.2f, 0.2f, 0.2f)).clickable { }, contentAlignment = Alignment.Center) {
                 Card(
                     modifier = Modifier.width(350.dp),
                     backgroundColor = colorWhite,
@@ -634,12 +733,25 @@ class FileTransferScreen(
         }
     }
 
+    @Composable
+    fun DragFilesDialog() {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(color = Color(0.2f, 0.2f, 0.2f, 0.2f))
+                .clickable { },
+            contentAlignment = Alignment.Center) {
+            Text(text = "Drop files to sending...", style = TextStyle(fontSize = 22.sp, color = Color.DarkGray))
+        }
+    }
+
     suspend fun updateNewMessage(msg: Message) {
         updateState { it.copy(messages = it.messages + msg) }.await()
     }
 
     override fun stop(screenRoute: ScreenRoute) {
         super.stop(screenRoute)
+        screenRoute.frameWindowScope.window.dropTarget = null
         myFolderContent.stop(screenRoute)
         remoteFolderContent.stop(screenRoute)
         messageContent.stop(screenRoute)

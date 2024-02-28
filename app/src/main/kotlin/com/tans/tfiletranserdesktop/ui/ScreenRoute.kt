@@ -2,6 +2,7 @@ package com.tans.tfiletranserdesktop.ui
 
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.window.FrameWindowScope
 import com.tans.tfiletranserdesktop.core.Stateable
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.localconnection.LocalConnectionScreen
@@ -19,13 +20,13 @@ object EmptyScreen : BaseScreen<Unit>(Unit) {
 }
 
 @Composable
-fun startDefaultScreenRoute() {
-    val screenRoute = ScreenRoute()
+fun startDefaultScreenRoute(frameWindowScope: FrameWindowScope) {
+    val screenRoute = ScreenRoute(frameWindowScope)
     screenRoute.start()
     screenRoute.routeTo(LocalConnectionScreen())
 }
 
-class ScreenRoute : Stateable<List<BaseScreen<*>>> by Stateable(emptyList()), CoroutineScope by CoroutineScope(Dispatchers.Default) {
+class ScreenRoute(val frameWindowScope: FrameWindowScope) : Stateable<List<BaseScreen<*>>> by Stateable(emptyList()), CoroutineScope by CoroutineScope(Dispatchers.Default) {
 
     @Composable
     internal fun start() {

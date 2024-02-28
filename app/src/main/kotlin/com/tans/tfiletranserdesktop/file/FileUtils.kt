@@ -126,7 +126,20 @@ fun File.toFileExploreFile(): FileExploreFile {
     }
 }
 
-fun List<FileLeaf.CommonFileLeaf>.toExploreFiles(): List<FileExploreFile> {
+fun List<File>.jvmFilesToExploreFiles(): List<FileExploreFile> {
+    return this
+        .filter { it.isFile && it.canRead() }
+        .map {
+        FileExploreFile(
+            name = it.name,
+            path = it.absoluteFile.canonicalPath,
+            size = it.length(),
+            lastModify = it.lastModified()
+        )
+    }
+}
+
+fun List<FileLeaf.CommonFileLeaf>.leafToExploreFiles(): List<FileExploreFile> {
     return this.map {
         FileExploreFile(
             name = it.name,

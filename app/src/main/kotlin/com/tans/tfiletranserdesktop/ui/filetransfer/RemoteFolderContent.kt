@@ -86,7 +86,7 @@ class RemoteFolderContent(val fileTransferScreen: FileTransferScreen) :
                 FloatingActionButton(onClick = {
                     launch(Dispatchers.IO) {
                         val selectFiles = bindState().map { it.selectedFiles }.firstOrError().await().filter { it.size > 0 }
-                        val exploreFiles = selectFiles.toExploreFiles()
+                        val exploreFiles = selectFiles.leafToExploreFiles()
                         if (exploreFiles.isNotEmpty()) {
                             runCatching {
                                 fileTransferScreen.fileExplore.requestDownloadFilesSuspend(

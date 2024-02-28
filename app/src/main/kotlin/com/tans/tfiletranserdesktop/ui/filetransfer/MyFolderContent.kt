@@ -199,21 +199,11 @@ class MyFolderContent(val fileTransferScreen: FileTransferScreen) : BaseScreen<M
             Box(modifier = Modifier.align(Alignment.BottomEnd).padding(20.dp)) {
                 FloatingActionButton(onClick = {
                     launch(Dispatchers.IO) {
-                        val selectFiles = bindState().map { it.selectedFiles }.firstOrError().await().filter { it.size > 0 }
-                        val exploreFiles = selectFiles.toExploreFiles()
-                        if (exploreFiles.isNotEmpty()) {
-                            runCatching {
-                                fileTransferScreen.fileExplore
-                                    .requestSendFilesSuspend(exploreFiles)
-                            }.onSuccess {
-                                updateState { oldState ->
-                                    oldState.copy(selectedFiles = emptySet())
-                                }.await()
-                                fileTransferScreen.sendFiles(files = exploreFiles)
-                            }.onFailure {
-                                JvmLog.e(TAG, "Request send msg error: ${it.message}", it)
-                            }
-                        }
+                        val selectFiles = bindState().map { it.selectedFiles }.firstOrError().await().toList()
+                        updateState { oldState ->
+                            oldState.copy(selectedFiles = emptySet())
+                        }.await()
+                        fileTransferScreen.sendLeafFilesWithRequest(selectFiles)
                     }
                 }) {
                     Image(painter = painterResource("images/share_variant_outline.xml"), contentDescription = null)
