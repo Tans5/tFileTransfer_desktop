@@ -2,9 +2,9 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.8.20"
-    kotlin("kapt") version "1.8.20"
-    id("org.jetbrains.compose") version "1.4.0"
+    kotlin("jvm") version "1.9.22"
+    kotlin("kapt") version "1.9.22"
+    id("org.jetbrains.compose") version "1.5.12"
 }
 
 group = "me.tanstan"
@@ -24,13 +24,13 @@ dependencies {
     implementation ("io.reactivex.rxjava3:rxjava:3.1.6")
     implementation ("io.reactivex.rxjava3:rxkotlin:3.0.1")
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-rx3:1.7.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-rx3:1.8.0")
 
-    implementation("com.squareup.moshi:moshi:1.14.0")
-    implementation("com.squareup.moshi:moshi-kotlin:1.14.0")
-    implementation("com.squareup.moshi:moshi-adapters:1.14.0")
-    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.14.0")
+    implementation("com.squareup.moshi:moshi:1.15.1")
+    implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
+    implementation("com.squareup.moshi:moshi-adapters:1.15.1")
+    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
 
     implementation("io.netty:netty-all:4.1.86.Final")
 
@@ -46,9 +46,9 @@ sourceSets.main {
 
 tasks.register("prepareKotlinBuildScriptModel"){}
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "11"
-}
+//tasks.withType<KotlinCompile> {
+//    kotlinOptions.jvmTarget = "11"
+//}
 
 compose.desktop {
     application {
