@@ -1,41 +1,35 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.9.22"
-    kotlin("kapt") version "1.9.22"
-    id("org.jetbrains.compose") version "1.5.12"
+    alias(libs.plugins.jetbrainsKotlinJvm)
+    alias(libs.plugins.compose)
+    id("kotlin-kapt")
 }
 
 group = "me.tanstan"
 version = "2.3.0"
 
-repositories {
-    mavenCentral()
-    google()
-    maven { url = uri("https://maven.pkg.jetbrains.space/public/p/compose/dev") }
-    maven { url = uri("https://www.jitpack.io") }
-}
-
 dependencies {
     implementation(compose.desktop.currentOs)
 
     // RxJava3
-    implementation ("io.reactivex.rxjava3:rxjava:3.1.6")
-    implementation ("io.reactivex.rxjava3:rxkotlin:3.0.1")
+    implementation(libs.rxjava3)
+    implementation(libs.rxkotlin3)
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-rx3:1.8.0")
+    // Kotlin Coroutines
+    implementation(libs.coroutines.core)
+    implementation(libs.coroutines.core.jvm)
+    implementation(libs.coroutines.rx3)
 
-    implementation("com.squareup.moshi:moshi:1.15.1")
-    implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
-    implementation("com.squareup.moshi:moshi-adapters:1.15.1")
-    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")
+    // Moshi
+    implementation(libs.moshi)
+    implementation(libs.moshi.kotlin)
+    implementation(libs.moshi.adapters)
+    kapt(libs.moshi.kotlin.codegen)
 
-    implementation("io.netty:netty-all:4.1.86.Final")
+    implementation(libs.netty)
 
-    // QRCode Gen
-    implementation("com.google.zxing:javase:3.3.0")
+    implementation(libs.zxing)
 
     implementation(project(":net"))
 }

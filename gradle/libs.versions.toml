@@ -1,0 +1,37 @@
+[versions]
+jetbrainsKotlinJvm = "1.9.22"
+compose = "1.5.12"
+googleKsp = "1.9.23-1.0.19"
+junit = "4.13.2"
+annotaion = "1.7.1"
+rxjava3 = "3.1.8"
+rxkotlin3 = "3.0.1"
+corouines = "1.8.0"
+moshi = "1.15.1"
+netty = "4.1.86.Final"
+okio = "3.6.0"
+zxing = "3.3.0"
+
+[libraries]
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-annotaion = { group = "androidx.annotation", name = "annotation", version.ref = "annotaion" }
+rxjava3 = { group = "io.reactivex.rxjava3", name = "rxjava", version.ref = "rxjava3" }
+rxkotlin3 = { group = "io.reactivex.rxjava3", name = "rxkotlin", version.ref = "rxkotlin3" }
+coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "corouines" }
+coroutines-core-jvm = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core-jvm", version.ref = "corouines" }
+coroutines-rx3 = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-rx3", version.ref = "corouines" }
+moshi = { group = "com.squareup.moshi", name = "moshi", version.ref = "moshi" }
+moshi-kotlin = { group = "com.squareup.moshi", name = "moshi-kotlin", version.ref = "moshi" }
+moshi-kotlin-codegen = { group = "com.squareup.moshi", name = "moshi-kotlin-codegen", version.ref = "moshi" }
+moshi-adapters = { group = "com.squareup.moshi", name = "moshi-adapters", version.ref = "moshi" }
+netty = { group = "io.netty", name = "netty-all", version.ref = "netty" }
+okio = { group = "com.squareup.okio", name = "okio", version.ref = "okio" }
+zxing = { group = "com.google.zxing", name = "javase", version.ref = "zxing"}
+
+[plugins]
+jetbrainsKotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
+compose = { id = "org.jetbrains.compose", version.ref = "compose" }
+googleKsp = { id = "com.google.devtools.ksp", version.ref = "googleKsp" }
+
+
+
