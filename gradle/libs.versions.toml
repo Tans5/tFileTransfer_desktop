@@ -1,6 +1,6 @@
 [versions]
-jetbrainsKotlinJvm = "1.9.22"
-compose = "1.5.12"
+jetbrainsKotlinJvm = "1.9.23"
+compose = "1.6.2"
 googleKsp = "1.9.23-1.0.19"
 junit = "4.13.2"
 annotaion = "1.7.1"
