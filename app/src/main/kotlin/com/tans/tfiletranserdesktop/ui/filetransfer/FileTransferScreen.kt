@@ -1,7 +1,9 @@
 package com.tans.tfiletranserdesktop.ui.filetransfer
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -10,7 +12,11 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draganddrop.DragAndDropEvent
+import androidx.compose.ui.draganddrop.DragAndDropTarget
+import androidx.compose.ui.draganddrop.awtTransferable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -179,65 +185,6 @@ class FileTransferScreen(
 
     private val ioExecutor: Executor by lazy {
         Dispatchers.IO.asExecutor()
-    }
-
-    private val dropTarget: DropTarget by lazy {
-        object : DropTarget() {
-
-            override fun dragEnter(dtde: DropTargetDragEvent) {
-                try {
-                    dtde.acceptDrag(DnDConstants.ACTION_REFERENCE)
-                    launch(Dispatchers.IO) {
-                        val state = stateStore.firstOrError().await()
-                        if (state.connectStatus is ConnectStatus.Connected) {
-                            val showingDialog = state.showDialog
-                            if (showingDialog == FileTransferDialog.None) {
-                                updateState {
-                                    it.copy(showDialog = FileTransferDialog.DragFiles)
-                                }.await()
-                            }
-                        }
-                    }
-                } catch (e: Throwable) {
-                    JvmLog.e(TAG, "Drag files enter error.", e)
-                }
-            }
-
-            override fun dragExit(dte: DropTargetEvent?) {
-                try {
-                    launch(Dispatchers.IO) {
-                        val state = stateStore.firstOrError().await()
-                        if (state.showDialog == FileTransferDialog.DragFiles) {
-                            updateState { it.copy(showDialog = FileTransferDialog.None) }.await()
-                        }
-                    }
-                } catch (e: Throwable) {
-                    JvmLog.e(TAG, "Drag files exit error.", e)
-                }
-            }
-
-            override fun drop(dtde: DropTargetDropEvent) {
-                    try {
-                        dtde.acceptDrop(DnDConstants.ACTION_REFERENCE)
-                        val files = dtde.transferable.getTransferData(DataFlavor.javaFileListFlavor) as List<File>
-                        for (f in files) {
-                            JvmLog.d(TAG, "Get drop file: ${f.absoluteFile.canonicalPath}")
-                        }
-                        launch(Dispatchers.IO) {
-                            val state = stateStore.firstOrError().await()
-                            if (state.connectStatus is ConnectStatus.Connected) {
-                                val showingDialog = state.showDialog
-                                if (showingDialog == FileTransferDialog.DragFiles) {
-                                    sendJvmFilesWithRequest(files)
-                                }
-                            }
-                        }
-
-                    } catch (e: Throwable) {
-                        JvmLog.e(TAG, "Drop files error.", e)
-                    }
-            }
-        }
     }
 
     override fun initData() {
@@ -502,13 +449,62 @@ class FileTransferScreen(
         }
     }
 
+    @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
     @Composable
     override fun start(screenRoute: ScreenRoute) {
-        screenRoute.frameWindowScope.window.dropTarget = dropTarget
         val selectedTab = bindState().map { it.selectedTab }.distinctUntilChanged().subscribeAsState(FileTransferTab.MyFolder)
         val connectStatus = bindState().map { it.connectStatus }.distinctUntilChanged().subscribeAsState(ConnectStatus.Connecting)
         Scaffold(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize()
+                .dragAndDropTarget(
+                    shouldStartDragAndDrop = { true },
+                    target = object : DragAndDropTarget {
+                        override fun onEntered(event: DragAndDropEvent) {
+                            JvmLog.d(TAG, "Drag enter: $event")
+                            launch(Dispatchers.IO) {
+                                val state = stateStore.firstOrError().await()
+                                if (state.connectStatus is ConnectStatus.Connected) {
+                                    val showingDialog = state.showDialog
+                                    if (showingDialog == FileTransferDialog.None) {
+                                        updateState {
+                                            it.copy(showDialog = FileTransferDialog.DragFiles)
+                                        }.await()
+                                    }
+                                }
+                            }
+                        }
+
+                        override fun onDrop(event: DragAndDropEvent): Boolean {
+                            JvmLog.d(TAG, "Do drop: $event")
+                            val files = event.awtTransferable.getTransferData(DataFlavor.javaFileListFlavor) as List<File>
+                            for (f in files) {
+                                JvmLog.d(TAG, "Get drop file: ${f.absoluteFile.canonicalPath}")
+                            }
+                            if (files.isNotEmpty()) {
+                                launch(Dispatchers.IO) {
+                                    val state = stateStore.firstOrError().await()
+                                    if (state.connectStatus is ConnectStatus.Connected) {
+                                        val showingDialog = state.showDialog
+                                        if (showingDialog == FileTransferDialog.DragFiles) {
+                                            sendJvmFilesWithRequest(files)
+                                        }
+                                    }
+                                }
+                            }
+                            return true
+                        }
+
+                        override fun onExited(event: DragAndDropEvent) {
+                            JvmLog.d(TAG, "Drag exit: $event")
+                            launch(Dispatchers.IO) {
+                                val state = stateStore.firstOrError().await()
+                                if (state.showDialog == FileTransferDialog.DragFiles) {
+                                    updateState { it.copy(showDialog = FileTransferDialog.None) }.await()
+                                }
+                            }
+                        }
+                    }
+                ),
             topBar = {
                 TopAppBar(
                     title = {
