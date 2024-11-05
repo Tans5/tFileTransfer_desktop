@@ -15,9 +15,10 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.client.j2se.MatrixToImageWriter
 import com.google.zxing.qrcode.QRCodeWriter
 import com.tans.tfiletranserdesktop.logs.JvmLog
+import com.tans.tfiletranserdesktop.resources.Res
+import com.tans.tfiletranserdesktop.resources.broadcast_sender_dialog_cancel
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.dialogs.BaseStatableDialog
-import com.tans.tfiletranserdesktop.ui.resources.stringBroadcastSenderDialogCancel
 import com.tans.tfiletranserdesktop.utils.toJson
 import com.tans.tfiletransporter.netty.toInt
 import com.tans.tfiletransporter.transferproto.TransferProtoConstant
@@ -31,6 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx3.await
+import org.jetbrains.compose.resources.stringResource
 import java.net.InetAddress
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
@@ -127,7 +129,7 @@ class QRCodeServerDialog(
                 TextButton(
                     onClick = { cancel() }
                 ) {
-                    Text(stringBroadcastSenderDialogCancel)
+                    Text(stringResource(Res.string.broadcast_sender_dialog_cancel))
                 }
             }
         }

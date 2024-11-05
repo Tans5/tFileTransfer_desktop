@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.jetbrainsKotlinJvm)
-    id("kotlin-kapt")
+    alias(libs.plugins.googleKsp)
 }
 
 //tasks.withType<KotlinCompile> {
@@ -15,7 +15,7 @@ dependencies {
     implementation(libs.moshi)
     implementation(libs.moshi.kotlin)
     implementation(libs.moshi.adapters)
-    kapt(libs.moshi.kotlin.codegen)
+    ksp(libs.moshi.kotlin.codegen)
 
     implementation(libs.netty)
     implementation(libs.okio)

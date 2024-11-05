@@ -3,7 +3,8 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 plugins {
     alias(libs.plugins.jetbrainsKotlinJvm)
     alias(libs.plugins.compose)
-    id("kotlin-kapt")
+    alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.googleKsp)
 }
 
 group = "me.tanstan"
@@ -25,11 +26,13 @@ dependencies {
     implementation(libs.moshi)
     implementation(libs.moshi.kotlin)
     implementation(libs.moshi.adapters)
-    kapt(libs.moshi.kotlin.codegen)
+    ksp(libs.moshi.kotlin.codegen)
 
     implementation(libs.netty)
 
     implementation(libs.zxing)
+
+    implementation(libs.compose.reouseces)
 
     implementation(project(":net"))
 }
@@ -63,4 +66,11 @@ compose.desktop {
             }
         }
     }
+}
+
+compose.resources {
+
+    publicResClass = true
+    packageOfResClass = "com.tans.tfiletranserdesktop.resources"
+    generateResClass = auto
 }

@@ -13,12 +13,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tans.tfiletranserdesktop.logs.JvmLog
+import com.tans.tfiletranserdesktop.resources.Res
+import com.tans.tfiletranserdesktop.resources.send
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
@@ -28,6 +29,7 @@ import com.tans.tfiletranserdesktop.ui.resources.colorTextBlack
 import com.tans.tfiletranserdesktop.ui.resources.colorWhite
 import com.tans.tfiletransporter.transferproto.fileexplore.requestMsgSuspend
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
 
 
 class MessageContent(
@@ -147,7 +149,7 @@ class MessageContent(
                             },
                             modifier = Modifier.align(Alignment.CenterVertically)
                         ) {
-                            Image(painter = painterResource("images/send.xml"), contentDescription = null)
+                            Image(painter = painterResource(Res.drawable.send), contentDescription = null)
                         }
                     }
                 }

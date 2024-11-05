@@ -8,10 +8,11 @@ import androidx.compose.material.FloatingActionButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.tans.tfiletranserdesktop.file.*
 import com.tans.tfiletranserdesktop.logs.JvmLog
+import com.tans.tfiletranserdesktop.resources.Res
+import com.tans.tfiletranserdesktop.resources.download_outline
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
@@ -20,6 +21,7 @@ import com.tans.tfiletransporter.transferproto.fileexplore.requestScanDirSuspend
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx3.await
+import org.jetbrains.compose.resources.painterResource
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 
@@ -103,7 +105,7 @@ class RemoteFolderContent(val fileTransferScreen: FileTransferScreen) :
                         }
                     }
                 }) {
-                    Image(painter = painterResource("images/download_outline.xml"), contentDescription = null)
+                    Image(painter = painterResource(Res.drawable.download_outline), contentDescription = null)
                 }
             }
         }

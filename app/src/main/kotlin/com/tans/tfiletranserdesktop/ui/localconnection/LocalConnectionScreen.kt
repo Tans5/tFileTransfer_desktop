@@ -12,6 +12,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tans.tfiletranserdesktop.file.LOCAL_DEVICE
+import com.tans.tfiletranserdesktop.resources.Res
+import com.tans.tfiletranserdesktop.resources.app_name
+import com.tans.tfiletranserdesktop.resources.local_connection_as_receiver
+import com.tans.tfiletranserdesktop.resources.local_connection_as_server
+import com.tans.tfiletranserdesktop.resources.local_connection_local_address
+import com.tans.tfiletranserdesktop.resources.local_connection_local_device
+import com.tans.tfiletranserdesktop.resources.local_connection_show_qr_code
+import com.tans.tfiletranserdesktop.resources.local_connection_tips
+import com.tans.tfiletranserdesktop.resources.local_connection_title
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
@@ -20,6 +29,7 @@ import com.tans.tfiletranserdesktop.ui.resources.*
 import com.tans.tfiletransporter.netty.findLocalAddressV4
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx3.await
+import org.jetbrains.compose.resources.stringResource
 import java.net.InetAddress
 import java.util.*
 
@@ -60,7 +70,7 @@ class LocalConnectionScreen : BaseScreen<LocalConnectionState>(LocalConnectionSt
             topBar = {
                 TopAppBar(
                     title = {
-                        Text(stringAppName)
+                        Text(stringResource(Res.string.app_name))
                     }
                 )
             }
@@ -79,14 +89,14 @@ class LocalConnectionScreen : BaseScreen<LocalConnectionState>(LocalConnectionSt
                     Column(
                         modifier = Modifier.fillMaxWidth().padding(18.dp)
                     ) {
-                        Text(text = stringLocalConnectionTitle, style = TextStyle(color = colorTextBlack, fontSize = 16.sp, fontWeight = FontWeight.W400))
+                        Text(text = stringResource(Res.string.local_connection_title), style = TextStyle(color = colorTextBlack, fontSize = 16.sp, fontWeight = FontWeight.W400))
                         Spacer(Modifier.height(5.dp))
-                        Text(text = stringLocalConnectionTips, style = TextStyle(color = colorTextGray, fontSize = 14.sp))
+                        Text(text = stringResource(Res.string.local_connection_tips), style = TextStyle(color = colorTextGray, fontSize = 14.sp))
                         Spacer(Modifier.height(5.dp))
                         val deviceInfo = bindState().map { it.localDeviceInfo }.distinctUntilChanged().subscribeAsState("")
-                        Text(text = "$stringLocalConnectionLocalDevice ${deviceInfo.value}", style = TextStyle(color = colorTextGray, fontSize = 14.sp, fontWeight = FontWeight.Bold))
+                        Text(text = stringResource(Res.string.local_connection_local_device, deviceInfo.value), style = TextStyle(color = colorTextGray, fontSize = 14.sp, fontWeight = FontWeight.Bold))
                         Spacer(Modifier.height(5.dp))
-                        Text(text = stringLocalConnectionLocalAddress, style = TextStyle(color = colorTextGray, fontSize = 14.sp, fontWeight = FontWeight.Bold))
+                        Text(text = stringResource(Res.string.local_connection_local_address), style = TextStyle(color = colorTextGray, fontSize = 14.sp, fontWeight = FontWeight.Bold))
                         Spacer(Modifier.height(3.dp))
                         val addresses = bindState().map { it.addresses }.distinctUntilChanged().subscribeAsState(emptyList())
                         val selectedIndex = bindState().map { it.selectAddressIndex }.distinctUntilChanged().subscribeAsState(Optional.empty())
@@ -106,7 +116,7 @@ class LocalConnectionScreen : BaseScreen<LocalConnectionState>(LocalConnectionSt
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        actionButton(scope = this, text = stringLocalConnectionShowQRCode) {
+                        actionButton(scope = this, text = stringResource(Res.string.local_connection_show_qr_code)) {
                             launch {
                                 updateState { oldState ->
                                     oldState.copy(dialogEvent = LocalConnectionDialogEvent.QRCodeServerDialog(time = System.currentTimeMillis()))
@@ -116,7 +126,7 @@ class LocalConnectionScreen : BaseScreen<LocalConnectionState>(LocalConnectionSt
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        actionButton(scope = this, text = stringLocalConnectionAsReceiver) {
+                        actionButton(scope = this, text = stringResource(Res.string.local_connection_as_server)) {
                             launch {
                                 updateState { oldState ->
                                     oldState.copy(dialogEvent = LocalConnectionDialogEvent.BroadcastReceiverDialog(time = System.currentTimeMillis()))
@@ -126,7 +136,7 @@ class LocalConnectionScreen : BaseScreen<LocalConnectionState>(LocalConnectionSt
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        actionButton(scope = this, text = stringLocalConnectionAsSender) {
+                        actionButton(scope = this, text = stringResource(Res.string.local_connection_as_receiver)) {
                             launch {
                                 updateState { oldState ->
                                     oldState.copy(dialogEvent = LocalConnectionDialogEvent.BroadcastSenderDialog(time = System.currentTimeMillis()))

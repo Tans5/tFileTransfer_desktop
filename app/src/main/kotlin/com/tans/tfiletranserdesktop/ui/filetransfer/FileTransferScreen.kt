@@ -18,6 +18,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tans.tfiletranserdesktop.file.*
 import com.tans.tfiletranserdesktop.logs.JvmLog
+import com.tans.tfiletranserdesktop.resources.Res
+import com.tans.tfiletranserdesktop.resources.broadcast_sender_dialog_cancel
+import com.tans.tfiletranserdesktop.resources.connection_error_title
+import com.tans.tfiletranserdesktop.resources.drop_files_to_send
+import com.tans.tfiletranserdesktop.resources.handshake_error_title
+import com.tans.tfiletranserdesktop.resources.tab_message
+import com.tans.tfiletranserdesktop.resources.tab_my_folder
+import com.tans.tfiletranserdesktop.resources.tab_remote_folder
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
@@ -30,6 +38,8 @@ import com.tans.tfiletransporter.transferproto.filetransfer.*
 import com.tans.tfiletransporter.transferproto.filetransfer.model.SenderFile
 import kotlinx.coroutines.*
 import kotlinx.coroutines.rx3.await
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import java.awt.datatransfer.DataFlavor
 import java.awt.dnd.*
 import java.io.File
@@ -37,10 +47,10 @@ import java.net.InetAddress
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicBoolean
 
-enum class FileTransferTab(val tabTag: String) {
-    MyFolder("MY FOLDER"),
-    RemoteFolder("REMOTE FOLDER"),
-    Message("MESSAGE")
+enum class FileTransferTab {
+    MyFolder,
+    RemoteFolder,
+    Message
 }
 
 sealed class ConnectStatus {
@@ -49,7 +59,7 @@ sealed class ConnectStatus {
 
     data object Closed : ConnectStatus()
 
-    data class Error(val title: String, val msg: String) : ConnectStatus()
+    data class Error(val title: StringResource, val msg: String) : ConnectStatus()
 }
 
 sealed class FileTransferDialog {
@@ -287,11 +297,11 @@ class FileTransferScreen(
                     updateState { it.copy(connectStatus = ConnectStatus.Closed) }.await()
                 } else {
                     JvmLog.e(TAG, "Handshake fail: $handshakeResult", handshakeResult.exceptionOrNull())
-                    updateState { it.copy(connectStatus = ConnectStatus.Error(title = stringHandshakeErrorTitle, msg = handshakeResult.exceptionOrNull()?.message ?: "")) }.await()
+                    updateState { it.copy(connectStatus = ConnectStatus.Error(title = Res.string.handshake_error_title, msg = handshakeResult.exceptionOrNull()?.message ?: "")) }.await()
                 }
             } else {
                 JvmLog.e(TAG, "Create connection fail: $connectResult", connectResult.exceptionOrNull())
-                updateState { it.copy(connectStatus = ConnectStatus.Error(title = stringConnectionErrorTitle, msg = connectResult.exceptionOrNull()?.message ?: "")) }.await()
+                updateState { it.copy(connectStatus = ConnectStatus.Error(title = Res.string.connection_error_title, msg = connectResult.exceptionOrNull()?.message ?: "")) }.await()
             }
         }
     }
@@ -560,7 +570,7 @@ class FileTransferScreen(
                                     }
                                 }
                             ) {
-                                Text(FileTransferTab.MyFolder.tabTag)
+                                Text(stringResource(Res.string.tab_my_folder))
                             }
 
                             Tab(
@@ -578,7 +588,7 @@ class FileTransferScreen(
                                     }
                                 }
                             ) {
-                                Text(FileTransferTab.RemoteFolder.tabTag)
+                                Text(stringResource(Res.string.tab_remote_folder))
                             }
 
                             Tab(
@@ -596,7 +606,7 @@ class FileTransferScreen(
                                     }
                                 }
                             ) {
-                                Text(FileTransferTab.Message.tabTag)
+                                Text(stringResource(Res.string.tab_message))
                             }
                         }
                     }
@@ -715,7 +725,7 @@ class FileTransferScreen(
                                 }
                             }
                         ) {
-                            Text(stringBroadcastSenderDialogCancel)
+                            Text(stringResource(Res.string.broadcast_sender_dialog_cancel))
                         }
                     }
                 }
@@ -741,7 +751,7 @@ class FileTransferScreen(
                 .background(color = Color(0.2f, 0.2f, 0.2f, 0.2f))
                 .clickable { },
             contentAlignment = Alignment.Center) {
-            Text(text = "Drop files to sending...", style = TextStyle(fontSize = 22.sp, color = Color.DarkGray))
+            Text(text = stringResource(Res.string.drop_files_to_send), style = TextStyle(fontSize = 22.sp, color = Color.DarkGray))
         }
     }
 

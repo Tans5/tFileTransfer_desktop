@@ -14,6 +14,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tans.tfiletranserdesktop.logs.JvmLog
+import com.tans.tfiletranserdesktop.resources.Res
+import com.tans.tfiletranserdesktop.resources.broadcast_receiver_dialog_cancel
+import com.tans.tfiletranserdesktop.resources.broadcast_receiver_dialog_title
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.dialogs.BaseStatableDialog
 import com.tans.tfiletranserdesktop.ui.resources.*
@@ -26,6 +29,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx3.await
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.stringResource
 import java.net.InetAddress
 import java.util.concurrent.atomic.AtomicReference
 
@@ -97,7 +101,7 @@ class BroadcastReceiverDialog(
     override fun DialogContent() {
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = stringBroadcastReceiverDialogTitle,
+                text = stringResource(Res.string.broadcast_receiver_dialog_title),
                 style = styleDialogTitle
             )
 
@@ -120,7 +124,7 @@ class BroadcastReceiverDialog(
                 TextButton(
                     onClick = { cancel() }
                 ) {
-                    Text(stringBroadcastReceiverDialogCancel)
+                    Text(stringResource(Res.string.broadcast_receiver_dialog_cancel))
                 }
             }
         }

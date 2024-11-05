@@ -9,6 +9,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tans.tfiletranserdesktop.logs.JvmLog
+import com.tans.tfiletranserdesktop.resources.Res
+import com.tans.tfiletranserdesktop.resources.broadcast_sender_dialog_cancel
+import com.tans.tfiletranserdesktop.resources.broadcast_sender_dialog_title
 import com.tans.tfiletranserdesktop.ui.dialogs.BaseStatableDialog
 import com.tans.tfiletranserdesktop.ui.resources.*
 import com.tans.tfiletransporter.netty.getBroadcastAddress
@@ -18,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.compose.resources.stringResource
 import java.net.InetAddress
 import java.util.concurrent.atomic.AtomicReference
 
@@ -94,7 +98,7 @@ class BroadcastSenderDialog(
     fun Loading() {
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
-                text = stringBroadcastSenderDialogTitle,
+                text = stringResource(Res.string.broadcast_sender_dialog_title),
                 style = styleDialogTitle
             )
             Spacer(Modifier.height(6.dp))
@@ -112,7 +116,7 @@ class BroadcastSenderDialog(
                 TextButton(
                     onClick = { cancel() }
                 ) {
-                    Text(stringBroadcastSenderDialogCancel)
+                    Text(stringResource(Res.string.broadcast_sender_dialog_cancel))
                 }
             }
         }

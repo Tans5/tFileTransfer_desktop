@@ -10,27 +10,30 @@ import androidx.compose.material.Checkbox
 import androidx.compose.material.Divider
 import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Text
-import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.material.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tans.tfiletranserdesktop.file.*
-import com.tans.tfiletranserdesktop.logs.JvmLog
+import com.tans.tfiletranserdesktop.resources.Res
+import com.tans.tfiletranserdesktop.resources.chevron_right
+import com.tans.tfiletranserdesktop.resources.file_outline
+import com.tans.tfiletranserdesktop.resources.folder_outline
+import com.tans.tfiletranserdesktop.resources.share_variant_outline
 import com.tans.tfiletranserdesktop.rxasstate.subscribeAsState
 import com.tans.tfiletranserdesktop.ui.BaseScreen
 import com.tans.tfiletranserdesktop.ui.ScreenRoute
 import com.tans.tfiletranserdesktop.ui.resources.colorTextBlack
 import com.tans.tfiletranserdesktop.ui.resources.colorTextGray
 import com.tans.tfiletransporter.toSizeString
-import com.tans.tfiletransporter.transferproto.fileexplore.requestSendFilesSuspend
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx3.await
+import org.jetbrains.compose.resources.painterResource
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneId
@@ -89,14 +92,14 @@ fun FileList(fileTree: FileTree, selectedFiles: Set<FileLeaf.CommonFileLeaf>, so
                                     .height(65.dp)
                                     .clickable(
                                             interactionSource = MutableInteractionSource(),
-                                            indication = rememberRipple(bounded = true),
+                                            indication = ripple(bounded = true),
                                             onClick = { onClick(fileOrDir) }
                                     ),
                             verticalAlignment = Alignment.CenterVertically) {
                         rememberScrollState(initial = 0)
                         Spacer(Modifier.width(20.dp))
                         Image(
-                                painter = painterResource(if (isDir) "images/folder_outline.xml" else "images/file_outline.xml"),
+                                painter = painterResource(if (isDir) Res.drawable.folder_outline else Res.drawable.file_outline),
                                 contentDescription = null,
                                 modifier = Modifier.width(25.dp).height(25.dp))
                         Spacer(Modifier.width(20.dp))
@@ -130,7 +133,7 @@ fun FileList(fileTree: FileTree, selectedFiles: Set<FileLeaf.CommonFileLeaf>, so
                         Spacer(Modifier.width(15.dp))
                         if (isDir) {
                             Image(
-                                    painter = painterResource("images/chevron_right.xml"),
+                                    painter = painterResource(Res.drawable.chevron_right),
                                     contentDescription = null
                             )
                         } else {
@@ -206,7 +209,7 @@ class MyFolderContent(val fileTransferScreen: FileTransferScreen) : BaseScreen<M
                         fileTransferScreen.sendLeafFilesWithRequest(selectFiles)
                     }
                 }) {
-                    Image(painter = painterResource("images/share_variant_outline.xml"), contentDescription = null)
+                    Image(painter = painterResource(Res.drawable.share_variant_outline), contentDescription = null)
                 }
             }
         }

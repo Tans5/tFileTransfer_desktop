@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resources>
+    <string name = "app_name">tFileTransfer</string>
+
+    <string name="local_connection_title">Connect Remote Device via LocalNetwork</string>
+    <string name="local_connection_tips">If two devices in the same local network, you can use this way create connection. \nUse QR code scan or UDP broadcast.</string>
+    <string name="local_connection_local_device">Local Device: %1$s</string>
+    <string name="local_connection_local_address">Local IP Address: </string>
+    <string name="local_connection_show_qr_code">Show QR Code</string>
+    <string name="local_connection_as_receiver">Search Servers</string>
+    <string name="local_connection_as_server">As Server</string>
+
+    <string name="broadcast_sender_dialog_title">Waiting connect...</string>
+    <string name="broadcast_sender_dialog_cancel">CANCEL</string>
+
+    <string name="broadcast_receiver_dialog_title">Searching...</string>
+    <string name="broadcast_receiver_dialog_cancel">CANCEL</string>
+
+    <string name="handshake_error_title">Handshake Error</string>
+
+    <string name="connection_error_title">Connection Error</string>
+
+    <string name="drop_files_to_send">Drop files to send...</string>
+
+    <string name="tab_my_folder">MY FOLDER</string>
+    <string name="tab_remote_folder">REMOTE FOLDER</string>
+    <string name="tab_message">MESSAGE</string>
+</resources>
