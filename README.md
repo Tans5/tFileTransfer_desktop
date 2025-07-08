@@ -11,8 +11,8 @@ Create connections ways:
 
 
 ## Screenshots
-<img src="screenshots/search.png" height="40%" width="40%"/>  <img src="screenshots/message.png" height="40%" width="40%"/> 
+<img src="screenshots/search.png" width="40%"/>  <img src="screenshots/message.png" width="40%"/> 
 
-<img src="screenshots/my_folder.png" height="40%" width="40%"/>  <img src="screenshots/remote_folder.png" height="40%" width="40%"/> 
+<img src="screenshots/my_folder.png" width="40%"/>  <img src="screenshots/remote_folder.png" width="40%"/> 
 
-<img src="screenshots/download.png" height="40%" width="40%"/>  <img src="screenshots/send.png" height="40%" width="40%"/> 
+<img src="screenshots/download.png" width="40%"/>  <img src="screenshots/send.png" width="40%"/> 
