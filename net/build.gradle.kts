@@ -3,10 +3,6 @@ plugins {
     alias(libs.plugins.googleKsp)
 }
 
-//tasks.withType<KotlinCompile> {
-//    kotlinOptions.jvmTarget = "11"
-//}
-
 dependencies {
 
     implementation(libs.coroutines.core)
@@ -21,4 +17,6 @@ dependencies {
     implementation(libs.okio)
 
     implementation(libs.androidx.annotaion)
+
+    implementation(libs.tlrucache)
 }

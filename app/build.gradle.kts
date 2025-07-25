@@ -33,6 +33,8 @@ dependencies {
     implementation(libs.zxing)
 
     implementation(libs.compose.reouseces)
+    implementation(libs.compose.material)
+    implementation(libs.icons)
 
     implementation(project(":net"))
 }

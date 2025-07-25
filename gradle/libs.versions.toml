@@ -1,7 +1,7 @@
 [versions]
-jetbrainsKotlinJvm = "2.0.21"
+jetbrainsKotlinJvm = "2.2.0"
 compose = "1.7.0"
-googleKsp = "2.0.21-1.0.26"
+googleKsp = "2.2.0-2.0.2"
 junit = "4.13.2"
 annotaion = "1.9.1"
 rxjava3 = "3.1.8"
@@ -11,7 +11,8 @@ moshi = "1.15.1"
 netty = "4.1.86.Final"
 okio = "3.9.0"
 zxing = "3.3.0"
-composeResources = "1.7.0"
+tlrucache = "1.0.1"
+icons = "1.7.8"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -28,7 +29,10 @@ moshi-adapters = { group = "com.squareup.moshi", name = "moshi-adapters", versio
 netty = { group = "io.netty", name = "netty-all", version.ref = "netty" }
 okio = { group = "com.squareup.okio", name = "okio", version.ref = "okio" }
 zxing = { group = "com.google.zxing", name = "javase", version.ref = "zxing"}
-compose-reouseces = { group = "org.jetbrains.compose.components", name = "components-resources", version.ref = "composeResources" }
+compose-reouseces = { group = "org.jetbrains.compose.components", name = "components-resources", version.ref = "compose" }
+compose-material = { group = "org.jetbrains.compose.material", name = "material", version.ref = "compose"}
+icons = { group = "androidx.compose.material", name = "material-icons-extended", version.ref="icons"}
+tlrucache = { group = "io.github.tans5", name = "tlrucache", version.ref = "tlrucache" }
 
 [plugins]
 jetbrainsKotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
