@@ -21,4 +21,6 @@ dependencies {
     implementation(libs.okio)
 
     implementation(libs.androidx.annotaion)
+
+    implementation(libs.tlrucache)
 }

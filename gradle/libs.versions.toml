@@ -12,6 +12,7 @@ netty = "4.1.86.Final"
 okio = "3.9.0"
 zxing = "3.3.0"
 composeResources = "1.7.0"
+tlrucache = "1.0.1"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -29,6 +30,7 @@ netty = { group = "io.netty", name = "netty-all", version.ref = "netty" }
 okio = { group = "com.squareup.okio", name = "okio", version.ref = "okio" }
 zxing = { group = "com.google.zxing", name = "javase", version.ref = "zxing"}
 compose-reouseces = { group = "org.jetbrains.compose.components", name = "components-resources", version.ref = "composeResources" }
+tlrucache = { group = "io.github.tans5", name = "tlrucache", version.ref = "tlrucache" }
 
 [plugins]
 jetbrainsKotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }

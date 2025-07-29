@@ -126,7 +126,7 @@ class LocalConnectionScreen : BaseScreen<LocalConnectionState>(LocalConnectionSt
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        actionButton(scope = this, text = stringResource(Res.string.local_connection_as_server)) {
+                        actionButton(scope = this, text = stringResource(Res.string.local_connection_as_receiver)) {
                             launch {
                                 updateState { oldState ->
                                     oldState.copy(dialogEvent = LocalConnectionDialogEvent.BroadcastReceiverDialog(time = System.currentTimeMillis()))
@@ -136,7 +136,7 @@ class LocalConnectionScreen : BaseScreen<LocalConnectionState>(LocalConnectionSt
 
                         Spacer(modifier = Modifier.height(20.dp))
 
-                        actionButton(scope = this, text = stringResource(Res.string.local_connection_as_receiver)) {
+                        actionButton(scope = this, text = stringResource(Res.string.local_connection_as_server)) {
                             launch {
                                 updateState { oldState ->
                                     oldState.copy(dialogEvent = LocalConnectionDialogEvent.BroadcastSenderDialog(time = System.currentTimeMillis()))
