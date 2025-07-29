@@ -12,6 +12,9 @@ version = "2.3.0"
 
 dependencies {
     implementation(compose.desktop.currentOs)
+    implementation(libs.compose.reouseces)
+    implementation(libs.icons)
+    // implementation(libs.compose.material)
 
     // RxJava3
     implementation(libs.rxjava3)
@@ -31,10 +34,6 @@ dependencies {
     implementation(libs.netty)
 
     implementation(libs.zxing)
-
-    implementation(libs.compose.reouseces)
-    implementation(libs.compose.material)
-    implementation(libs.icons)
 
     implementation(project(":net"))
 }
