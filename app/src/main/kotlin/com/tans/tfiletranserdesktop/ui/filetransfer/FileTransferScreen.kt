@@ -1,15 +1,13 @@
 package com.tans.tfiletranserdesktop.ui.filetransfer
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.BiasAlignment
@@ -26,9 +24,12 @@ import androidx.compose.ui.unit.sp
 import com.tans.tfiletranserdesktop.file.*
 import com.tans.tfiletranserdesktop.logs.JvmLog
 import com.tans.tfiletranserdesktop.resources.Res
+import com.tans.tfiletranserdesktop.resources.arrow_back
 import com.tans.tfiletranserdesktop.resources.broadcast_sender_dialog_cancel
+import com.tans.tfiletranserdesktop.resources.chevron_left
 import com.tans.tfiletranserdesktop.resources.connection_error_title
 import com.tans.tfiletranserdesktop.resources.drop_files_to_send
+import com.tans.tfiletranserdesktop.resources.file_outline
 import com.tans.tfiletranserdesktop.resources.handshake_error_title
 import com.tans.tfiletranserdesktop.resources.tab_message
 import com.tans.tfiletranserdesktop.resources.tab_my_folder
@@ -46,9 +47,9 @@ import com.tans.tfiletransporter.transferproto.filetransfer.model.SenderFile
 import kotlinx.coroutines.*
 import kotlinx.coroutines.rx3.await
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import java.awt.datatransfer.DataFlavor
-import java.awt.dnd.*
 import java.io.File
 import java.net.InetAddress
 import java.util.concurrent.Executor
@@ -543,7 +544,7 @@ class FileTransferScreen(
                                 }
                             }
                         }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "ArrowBack")
+                            Image(painter = painterResource(Res.drawable.arrow_back), contentDescription = "ArrowBack")
                         }
                     }
                 )

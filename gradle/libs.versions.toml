@@ -1,7 +1,7 @@
 [versions]
-jetbrainsKotlinJvm = "2.0.21"
+jetbrainsKotlinJvm = "2.2.0"
 compose = "1.7.0"
-googleKsp = "2.0.21-1.0.26"
+googleKsp = "2.2.0-2.0.2"
 junit = "4.13.2"
 annotaion = "1.9.1"
 rxjava3 = "3.1.8"
