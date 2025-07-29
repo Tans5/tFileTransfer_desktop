@@ -13,7 +13,7 @@ version = "2.3.0"
 dependencies {
     implementation(compose.desktop.currentOs)
     implementation(libs.compose.reouseces)
-    implementation(libs.icons)
+    // implementation(libs.icons)
     // implementation(libs.compose.material)
 
     // RxJava3
